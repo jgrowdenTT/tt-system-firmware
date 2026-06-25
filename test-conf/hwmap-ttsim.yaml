@@ -1,0 +1,43 @@
+# Hardware map for twister device testing on Keraunos and Mimir (m1) chiplets of a ttsim PCIe device.
+#
+# Usage (from the west workspace root):
+#   twister --device-testing --hardware-map tt-system-firmware/test-conf/hwmap-ttsim.yaml \
+#           -T zephyr/tests --alt-config-root tt-system-firmware/test-conf/tests \
+#           -p tt_mmk/tt_keraunos/smc -p tt_mmk/tt_mimir/smc -s <test.id>
+#
+# Each test: pre_script first resets every SMC in the topology to ROM/BL0; then the gr_pcie_gdb runner holds the SMC in reset, loads the image at the reset
+# vector, releases it and waits for the VUART; tt_keraunos_console.py then attaches as the serial port.
+# flash_before is required: the console can only attach once the image has published its VUART.
+# tt_qsr1a1 platforms live in hwmap-ttsim-qsr1a1.yaml (needs a QSR1A1-topology VM; MMK VMs crash).
+# Paths below assume tt-system-firmware lives at ~/tt-system-firmware-work/tt-system-firmware.
+- id: "0"
+  product: keraunos-ttsim
+  platform:
+    - tt_mmk/tt_keraunos/smc
+  connected: true
+  runner: gr_pcie_gdb
+  runner_params:
+    - "--target=k0"
+    - "--device-id=0"
+    - "--vuart-timeout=30"
+  serial_pty: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/tt_keraunos_console.py,k,0,--also,m1"
+  serial_baud: 115200
+  pre_script: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/gr_reset_to_rom_mmk.sh"
+  flash_before: true
+  flash_timeout: 120
+
+- id: "1"
+  product: mimir-ttsim
+  platform:
+    - tt_mmk/tt_mimir/smc
+  connected: true
+  runner: gr_pcie_gdb
+  runner_params:
+    - "--target=m1"
+    - "--device-id=0"
+    - "--vuart-timeout=30"
+  serial_pty: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/tt_keraunos_console.py,m1,0"
+  serial_baud: 115200
+  pre_script: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/gr_reset_to_rom_mmk.sh"
+  flash_before: true
+  flash_timeout: 120

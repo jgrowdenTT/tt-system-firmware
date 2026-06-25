@@ -22,19 +22,18 @@ import base64
 import logging
 from collections import namedtuple
 from runners.core import RunnerCaps, ZephyrBinaryRunner
-from pyocd.flash.file_programmer import FileProgrammer
-from pyocd.flash.eraser import FlashEraser
 
 # Import scripts from the current directory
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import tt_boot_fs
 import pcie_utils
 import pyocd_utils
 
 # Set environment variable for protobuf implementation
 if os.environ.get("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") != "python":
     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-from encode_spirom_bins import convert_proto_txt_to_bin_file
+
+# pyocd, tt_boot_fs and encode_spirom_bins are imported where used: west imports every runner
+# module on each invocation, and loading them here added ~0.25s to every `west flash`.
 
 TT_Z_P_ROOT = Path(__file__).parents[1]
 
@@ -173,6 +172,8 @@ class TTBootStrapRunner(ZephyrBinaryRunner):
         """
         Parses a binary file and wraps it in a bootfs structure for flashing.
         """
+        import tt_boot_fs
+
         # First address for data
         offset = 0x14000  # After SPI training word
         cfg = BOARD_ID_MAP[self.board_name][asic_id]
@@ -258,6 +259,9 @@ class TTBootStrapRunner(ZephyrBinaryRunner):
         """
         Parses the firmware bundle and returns the data to flash.
         """
+        import tt_boot_fs
+        from encode_spirom_bins import convert_proto_txt_to_bin_file
+
         board_cfg = BOARD_ID_MAP[self.board_name].copy()
         # Create a temporary directory to extract the tar file
         try:
@@ -349,6 +353,9 @@ class TTBootStrapRunner(ZephyrBinaryRunner):
         """
         if command != "flash":
             raise ValueError(f"Unsupported command: {command}")
+        from pyocd.flash.eraser import FlashEraser
+        from pyocd.flash.file_programmer import FileProgrammer
+
         for flash_op in self.flash_data:
             session = pyocd_utils.get_session(
                 flash_op.pyocd_config,

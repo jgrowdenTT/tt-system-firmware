@@ -31,6 +31,24 @@ static void fill_cmd_header(uint8_t app_id, uint8_t msg_id, uint16_t length,
 	hdr->header_crc = crc8((uint8_t *)hdr + 1, sizeof(*hdr) - 1, 0xD3, 0xFF, false);
 }
 
+static int validate_response_header(const struct occp_header *hdr)
+{
+	uint8_t calculated_crc;
+
+	calculated_crc = crc8((const uint8_t *)hdr + 1, sizeof(*hdr) - 1, 0xD3, 0xFF, false);
+	if (calculated_crc != hdr->header_crc) {
+		LOG_ERR("OCCP response header CRC mismatch: received 0x%02x, calculated 0x%02x",
+			hdr->header_crc, calculated_crc);
+		return -EBADMSG;
+	}
+	if (hdr->cmd_header.flags) {
+		LOG_ERR("OCCP command failed with flags: 0x%02x", hdr->cmd_header.flags);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 /**
  * @brief Get OCCP protocol version
  * @param backend OCCP backend to use
@@ -60,6 +78,10 @@ int occp_get_version(const struct occp_backend *backend, uint8_t *major, uint8_t
 		LOG_ERR("Failed to read OCCP GET_VERSION response: %d", ret);
 		return ret;
 	}
+	ret = validate_response_header(&version_resp.header);
+	if (ret != 0) {
+		return ret;
+	}
 	*major = version_resp.major_version;
 	*minor = version_resp.minor_version;
 	*patch = version_resp.patch_version;
@@ -86,9 +108,9 @@ static int occp_tx_rx(const struct occp_backend *backend, uint8_t *cmd, size_t c
 	}
 
 	resp_hdr = (struct occp_header *)response;
-	if (resp_hdr->cmd_header.flags) {
-		LOG_ERR("OCCP command failed with flags: 0x%02x", resp_hdr->cmd_header.flags);
-		return -EIO;
+	ret = validate_response_header(resp_hdr);
+	if (ret != 0) {
+		return ret;
 	}
 	return ret;
 }
@@ -133,7 +155,6 @@ int occp_write_data(const struct occp_backend *backend, uint64_t address, const 
 		    size_t length)
 {
 	struct occp_write_data_request write_req = {0};
-	struct occp_header resp;
 	int ret;
 	uint64_t write_addr = address;
 	size_t write_length;
@@ -147,8 +168,10 @@ int occp_write_data(const struct occp_backend *backend, uint64_t address, const 
 		LOG_ERR("Write length must be a multiple of 4 bytes");
 		return -EINVAL;
 	}
-
+	LOG_DBG("Sending OCCP WRITE_DATA command: addr=0x%llx, length=%zu",
+		write_addr, length);
 	while (length > 0) {
+		struct occp_header resp = {0};
 		write_length = MIN(length, OCCP_MAX_MSG_SIZE - sizeof(write_req));
 		write_length = ROUND_DOWN(write_length, 4); /* Align to 4 bytes */
 		/* Issue a WRITE_DATA command */
@@ -160,8 +183,6 @@ int occp_write_data(const struct occp_backend *backend, uint64_t address, const 
 		write_req.length = write_length;
 		memcpy(occp_rw_buffer, &write_req, sizeof(write_req));
 		memcpy(occp_rw_buffer + sizeof(write_req), data, write_length);
-		LOG_DBG("Sending OCCP WRITE_DATA command: addr=0x%llx, length=%zu, remaining=%zu",
-			write_addr, write_length, length);
 		ret = occp_run_transaction(backend, CONFIG_OCCP_RETRY_COUNT, occp_rw_buffer,
 					   sizeof(write_req) + write_length, (uint8_t *)&resp,
 					   sizeof(resp));
@@ -174,6 +195,7 @@ int occp_write_data(const struct occp_backend *backend, uint64_t address, const 
 		data += write_length;
 		length -= write_length;
 	}
+	LOG_DBG("OCCP WRITE_DATA command complete");
 	return 0;
 }
 
@@ -251,6 +273,8 @@ int occp_execute_image(const struct occp_backend *backend, uint64_t execution_ad
 	struct occp_execute_image_response exec_resp = {0};
 	int ret;
 
+	LOG_DBG("Sending OCCP EXECUTE_IMAGE command: addr=0x%llx, cpu=%u", execution_address,
+		cpu_id);
 	/* Issue an EXECUTE_IMAGE command */
 	fill_cmd_header(OCCP_APP_BOOT, OCCP_BOOT_MSG_EXECUTE_IMAGE,
 			sizeof(exec_req) - sizeof(exec_req.header), &exec_req.header);
@@ -269,10 +293,10 @@ int occp_execute_image(const struct occp_backend *backend, uint64_t execution_ad
 		LOG_ERR("Failed to read OCCP EXECUTE_IMAGE response: %d", ret);
 		return ret;
 	}
-	if (exec_resp.header.cmd_header.flags) {
-		LOG_ERR("OCCP EXECUTE_IMAGE command failed with flags: 0x%02x",
-			exec_resp.header.cmd_header.flags);
-		return -EIO;
+	ret = validate_response_header(&exec_resp.header);
+	if (ret != 0) {
+		return ret;
 	}
+	LOG_DBG("OCCP EXECUTE_IMAGE command complete");
 	return 0;
 }

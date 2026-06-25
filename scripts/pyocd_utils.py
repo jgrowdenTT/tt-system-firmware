@@ -22,13 +22,19 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
-try:
-    import usb.core
-    from pyocd.core.helpers import ConnectHelper
-    from pyocd.core import exceptions as pyocd_exceptions
-except ImportError:
-    print("Required modules not found. Please run: pip install pyocd pyusb")
-    sys.exit(os.EX_UNAVAILABLE)
+
+def _probe_modules():
+    """Import pyocd and pyusb on first use; importing pyocd costs ~0.3s, and west loads this
+    module (via tt_bootstrap) on every invocation even when no probe is involved."""
+    try:
+        import usb.core
+        from pyocd.core.helpers import ConnectHelper
+        from pyocd.core import exceptions as pyocd_exceptions
+    except ImportError:
+        print("Required modules not found. Please run: pip install pyocd pyusb")
+        sys.exit(os.EX_UNAVAILABLE)
+    return usb, ConnectHelper, pyocd_exceptions
+
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +103,7 @@ def select_asics(board_metadata, board_name, asic_index):
 
 def recover_stlink():
     """Attempt to recover ST-Link probes by resetting the USB bus."""
+    usb, _, _ = _probe_modules()
 
     def is_stlink_device(dev):
         return dev.idVendor == 0x0483  # STMicroelectronics
@@ -152,6 +159,7 @@ def create_session(pyocd_config=None, adapter_id=None, no_prompt=False, target=N
             "attached to STM32 if prompted"
         )
 
+    _, ConnectHelper, _ = _probe_modules()
     session = ConnectHelper.session_with_chosen_probe(**kwargs)
     if session is None:
         raise RuntimeError("Failed to connect to the debug probe")
@@ -197,6 +205,7 @@ def get_session(pyocd_config=None, adapter_id=None, no_prompt=False, target=None
     """Like :func:`create_session`, but retries once after an ST-Link
     USB reset if the initial connection fails.
     """
+    _, _, pyocd_exceptions = _probe_modules()
     try:
         return create_session(pyocd_config, adapter_id, no_prompt, target)
     except pyocd_exceptions.ProbeError as e:
