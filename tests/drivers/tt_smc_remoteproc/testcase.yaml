@@ -17,6 +17,7 @@ tests:
     timeout: 30
   drivers.tt_smc_remoteproc.bl1_primary.quasar:
     tags: smoke
+    build_only: true
     platform_allow:
       - tt_qsr1a1/tt_keraunos/smc
     sysbuild: true

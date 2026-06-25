@@ -27,6 +27,7 @@ runners:
   - file: scripts/tt_bootstrap.py
   - file: scripts/tt_flash_runner.py
   - file: scripts/tt_pyluwen_runner.py
+  - file: scripts/gr_pcie_gdb_runner.py
 
 package-managers:
   pip:
