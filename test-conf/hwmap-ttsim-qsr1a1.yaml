@@ -1,0 +1,59 @@
+# Hardware map for twister device testing on the Keraunos, Mimir (m0) and Quasar (q0) chiplets of a
+# QSR1A1 ttsim PCIe device.
+#
+# Only use this on a ttsim VM built with the QSR1A1 topology; on an MMK-topology VM these tests crash it.
+# Use scripts/run-twister-qsr1a1.sh, or from the west workspace root:
+#   twister --device-testing --hardware-map tt-system-firmware/test-conf/hwmap-ttsim-qsr1a1.yaml \
+#           -T zephyr/tests --alt-config-root tt-system-firmware/test-conf/tests \
+#           -p tt_qsr1a1/tt_keraunos/smc -p tt_qsr1a1/tt_mimir/smc -p tt_qsr1a1/tt_quasar/smc -s <test.id>
+#
+# Every test holds the target SMC in reset, loads the image and releases it; see hwmap-ttsim.yaml.
+# Before each test, pre_script resets every SMC in the topology to ROM/BL0.
+# Paths below assume tt-system-firmware lives at ~/tt-system-firmware-work/tt-system-firmware.
+- id: "0"
+  product: qsr1a1-keraunos-ttsim
+  platform:
+    - tt_qsr1a1/tt_keraunos/smc
+  connected: true
+  runner: gr_pcie_gdb
+  runner_params:
+    - "--target=k0"
+    - "--device-id=0"
+    - "--vuart-timeout=30"
+  serial_pty: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/tt_keraunos_console.py,k,0,--also,m0,--also,m1,--also,m2,--also,m3,--also,q0"
+  serial_baud: 115200
+  pre_script: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/gr_reset_to_rom_qsr1a1.sh"
+  flash_before: true
+  flash_timeout: 120
+
+- id: "1"
+  product: qsr1a1-mimir-ttsim
+  platform:
+    - tt_qsr1a1/tt_mimir/smc
+  connected: true
+  runner: gr_pcie_gdb
+  runner_params:
+    - "--target=m0"
+    - "--device-id=0"
+    - "--vuart-timeout=30"
+  serial_pty: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/tt_keraunos_console.py,m0,0"
+  serial_baud: 115200
+  pre_script: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/gr_reset_to_rom_qsr1a1.sh"
+  flash_before: true
+  flash_timeout: 120
+
+- id: "2"
+  product: qsr1a1-quasar-ttsim
+  platform:
+    - tt_qsr1a1/tt_quasar/smc
+  connected: true
+  runner: gr_pcie_gdb
+  runner_params:
+    - "--target=q0"
+    - "--device-id=0"
+    - "--vuart-timeout=30"
+  serial_pty: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/tt_keraunos_console.py,q0,0"
+  serial_baud: 115200
+  pre_script: "/home/ubuntu/tt-system-firmware-work/tt-system-firmware/scripts/gr_reset_to_rom_qsr1a1.sh"
+  flash_before: true
+  flash_timeout: 120
