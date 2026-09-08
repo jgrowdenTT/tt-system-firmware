@@ -228,8 +228,12 @@ def wait_for_smc_boot(timeout):
     Waits for SMC to complete boot after DMC is reset
     @param timeout: time to wait for boot in seconds
     """
-    remaining = timeout
+    start = time.monotonic()
     delay = 1
+
+    def timed_out():
+        return time.monotonic() - start >= timeout
+
     # First stage- rescan pcie
     while True:
         try:
@@ -239,9 +243,10 @@ def wait_for_smc_boot(timeout):
         if Path("/dev/tenstorrent/0").exists():
             break
         time.sleep(delay)
-        remaining -= delay
-        if remaining <= 0:
-            logger.error(f"Card did not enumerate after {timeout} seconds")
+        if timed_out():
+            logger.error(
+                f"Card did not enumerate after {time.monotonic() - start:.0f} seconds"
+            )
             return os.EX_UNAVAILABLE
     # Second stage- is the card firmware working?
     if not pyluwen_found:
@@ -263,23 +268,23 @@ def wait_for_smc_boot(timeout):
         except BaseException:
             # Rescan PCIe again, in case the card disappeared
             pcie_utils.rescan_pcie()
-        remaining -= delay
         time.sleep(delay)
-        if remaining <= 0:
-            logger.error(f"SMC failed to initialize after {timeout} seconds")
+        if timed_out():
+            logger.error(
+                f"SMC failed to initialize after {time.monotonic() - start:.0f} seconds"
+            )
             return os.EX_UNAVAILABLE
     # TAG_DM_APP_FW_VERSION stays 0 until SMC sends Dm2CmReadyRequest and DMC
     # responds with send_init_data (bh_chip_set_static_info). Telemetry becomes
     # readable before that handshake, so wait for the version to appear.
     m3_ver = telemetry.m3_app_fw_version
     while m3_ver == 0:
-        if remaining <= 0:
+        if timed_out():
             logger.error(
-                f"SMC is not up: DMC app FW version still 0 after {timeout} seconds"
+                f"SMC is not up: DMC app FW version still 0 after {time.monotonic() - start:.0f} seconds"
             )
             return os.EX_UNAVAILABLE
         time.sleep(delay)
-        remaining -= delay
         try:
             m3_ver = chip.get_telemetry().m3_app_fw_version
         except Exception:
@@ -296,12 +301,12 @@ def wait_for_smc_boot(timeout):
             if rsp[0] == 1:
                 break
         except Exception:
-            # Just decrement timeout, which we do below
             pass
-        remaining -= delay
         time.sleep(delay)
-        if remaining <= 0:
-            logger.error(f"SMC unable to communicate with DMC after {timeout} seconds")
+        if timed_out():
+            logger.error(
+                f"SMC unable to communicate with DMC after {time.monotonic() - start:.0f} seconds"
+            )
             return os.EX_UNAVAILABLE
     return os.EX_OK
 
