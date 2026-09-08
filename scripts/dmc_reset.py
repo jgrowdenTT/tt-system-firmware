@@ -50,6 +50,8 @@ DEFAULT_OPENOCD = DEFAULT_SDK_INSTALL_DIR / "usr" / "bin" / "openocd"
 DEFAULT_SCRIPTS_DIR = DEFAULT_SDK_INSTALL_DIR / "usr" / "share" / "openocd" / "scripts"
 DEFAULT_HW_MAP = OPT_DIR / "twister" / "hw-map.yml"
 
+DEFAULT_OPENOCD_TIMEOUT = 60
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Reset DMC", allow_abbrev=False)
@@ -111,6 +113,14 @@ def parse_args():
         action="store_true",
         help="Wait for SMC to boot after resetting DMC",
     )
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        default=DEFAULT_OPENOCD_TIMEOUT,
+        help="Timeout in seconds for the openocd command",
+        metavar="TIMEOUT",
+        type=int,
+    )
 
     args = parser.parse_args()
 
@@ -130,6 +140,19 @@ def parse_args():
 
 
 def reset_dmc(args):
+    """
+    Reset the DMC
+    All args must be provided if calling reset_dmc directly.
+    @param args: arguments
+        args.openocd: path to openocd executable
+        args.scripts: path to openocd scripts directory
+        args.config: path to openocd config file
+        args.jtag_id: JTAG ID of the DMC
+        args.hexfile: path to hex file to program to the DMC
+        args.timeout: timeout in seconds for the openocd command
+        args.debug: debug level
+    @return: exit code EX_OK if successful, otherwise an error code
+    """
     openocd_cmd = [
         str(args.openocd),
         "-s",
@@ -173,10 +196,28 @@ def reset_dmc(args):
             "stderr": subprocess.DEVNULL,
         }
 
-    proc = subprocess.run(openocd_cmd, **openocd_kwargs)
+    if args.timeout:
+        openocd_timeout = args.timeout
+    else:
+        openocd_timeout = DEFAULT_OPENOCD_TIMEOUT
+
+    try:
+        proc = subprocess.run(openocd_cmd, timeout=openocd_timeout, **openocd_kwargs)
+    except subprocess.TimeoutExpired as e:
+        logger.error(
+            f"OpenOCD timed out after {openocd_timeout}s: {' '.join(openocd_cmd)}"
+        )
+        if e.stdout:
+            logger.error(f"OpenOCD stdout:\n{e.stdout.decode(errors='replace')}")
+        if e.stderr:
+            logger.error(f"OpenOCD stderr:\n{e.stderr.decode(errors='replace')}")
+        return os.EX_SOFTWARE
     if proc.returncode != 0:
         logger.error("command failed: " + " ".join(openocd_cmd))
-        logger.error(f"Failed to reset DMC: {proc.stderr}")
+        if proc.stdout:
+            logger.error(f"OpenOCD stdout:\n{proc.stdout.decode(errors='replace')}")
+        if proc.stderr:
+            logger.error(f"OpenOCD stderr:\n{proc.stderr.decode(errors='replace')}")
         return os.EX_SOFTWARE
 
     return os.EX_OK

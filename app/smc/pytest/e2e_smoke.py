@@ -1047,6 +1047,7 @@ def dirty_reset_test():
     """
     Helper to execute dirty reset test. Returns True if test passes, False otherwise
     """
+    openocd_timeout = 30  # seconds to wait for OpenOCD to reset the DMC
     timeout = 60  # seconds to wait for SMC boot
 
     # Use dmc-reset script as a library to reset the DMC
@@ -1054,15 +1055,16 @@ def dirty_reset_test():
         return None
 
     args.config = dmc_reset.DEFAULT_DMC_CFG
-    args.debug = 0
+    args.debug = 1
     args.openocd = dmc_reset.DEFAULT_OPENOCD
     args.scripts = dmc_reset.DEFAULT_SCRIPTS_DIR
     args.jtag_id = None
     args.hexfile = None
+    args.timeout = openocd_timeout
 
     ret = dmc_reset.reset_dmc(args)
     if ret != os.EX_OK:
-        logger.warning("DMC reset failed on iteration")
+        logger.warning("DMC reset failed")
         return False
     ret = dmc_reset.wait_for_smc_boot(timeout)
     if ret != os.EX_OK:

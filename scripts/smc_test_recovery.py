@@ -50,6 +50,7 @@ def reset_dmc():
     args.scripts = dmc_reset.DEFAULT_SCRIPTS_DIR
     args.jtag_id = None
     args.hexfile = None
+    args.timeout = 30
 
     dmc_reset.reset_dmc(args)
 
