@@ -25,3 +25,4 @@ zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/firmware/drivers/sm
 zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/firmware/chiplet_config)
 zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/firmware/libs/basic_init/include)
 zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/firmware/libs/noc/include)
+zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/firmware/libs/clock/include)

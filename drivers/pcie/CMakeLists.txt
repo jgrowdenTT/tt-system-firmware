@@ -21,8 +21,4 @@ zephyr_library_include_directories(
 )
 
 zephyr_library_sources(tt_grendel_pcie.c)
-zephyr_library_sources(
-  ${SIVAL_SDK}/firmware/drivers/addr_remap/src/remapper.c
-  ${SIVAL_SDK}/firmware/libs/basic_init/src/basic_init.c
-)
 zephyr_library_link_libraries(${SIVAL_PCIE_LIB})
