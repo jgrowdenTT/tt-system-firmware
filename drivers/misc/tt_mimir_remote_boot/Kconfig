@@ -6,6 +6,7 @@ config TT_MIMIR_REMOTE_BOOT
 	default y
 	depends on DT_HAS_TENSTORRENT_MIMIR_REMOTE_BOOT_ENABLED
 	depends on TT_SMC_REMOTEPROC
+	select TT_D2D
 	help
 	  Enable the Mimir remote boot driver. Reads the Mimir FW image from
 	  the BUN2 staging area at the configured TOC index, then OCCP-loads it via

@@ -22,6 +22,14 @@ properties:
       List of tenstorrent,smc-remoteproc devices, one per Mimir, used to
       OCCP-load and start Mimir.
 
+  d2d:
+    type: phandles
+    required: false
+    description: |
+      Optional list of local tenstorrent,grendel-d2d devices paired by index
+      with smc-remoteproc. When present, the driver loads the D2D firmware
+      image for each paired tile on the Keraunos side after remote boot.
+
   fw-toc-index:
     type: int
     default: 1

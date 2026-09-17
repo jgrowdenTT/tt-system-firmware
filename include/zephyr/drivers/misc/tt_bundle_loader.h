@@ -26,6 +26,9 @@ extern "C" {
 /** @brief "PTOC" - FW_BUNDLE_TOC_ID*/
 #define FW_BUNDLE_TOC_ID (0x434f5450U)
 
+/** @brief Base address of where we should stage D2D FW over OCCP */
+#define TT_D2D_OCCP_STAGE_ADDR 0xc0066400UL
+
 /** @brief Base address of the BUN1 staging area in SMC local address space */
 #define TT_BUN1_STAGING_AREA_ADDR 0xc0066400UL
 
