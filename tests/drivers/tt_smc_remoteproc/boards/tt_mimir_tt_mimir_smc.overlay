@@ -14,7 +14,7 @@
 	i3c-scl-hz = <DT_FREQ_M(12)>; /* 12 MHz I3C SCL frequency */
 	i2c-scl-hz = <DT_FREQ_K(300)>; /* 300 kHz I2C SCL frequency */
 
-	remoteproc: remoteproc@88fc1fe8fa15 {
+	remoteproc_m1: remoteproc@88fc1fe8fa15 {
 		/* GPIO 61 is boot gpio */
 		boot-gpios = <&gpio1 29 GPIO_ACTIVE_HIGH>;
 		compatible = "tenstorrent,smc-remoteproc";

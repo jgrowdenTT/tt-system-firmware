@@ -1,0 +1,40 @@
+# Copyright (c) 2026 Tenstorrent AI ULC
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  A physical D2D link endpoint description used by chiplet remote-boot
+  drivers. Local links have one local D2D tile and one remote I3C endpoint.
+  Remote-only links have two remote I3C endpoints.
+
+compatible: "tenstorrent,d2d-link"
+
+include: base.yaml
+
+properties:
+  local-d2d:
+    type: phandle
+    required: false
+
+  remote-i3c:
+    type: phandle
+    required: false
+
+  remote-instance:
+    type: int
+    required: false
+
+  remote-a-i3c:
+    type: phandle
+    required: false
+
+  remote-a-instance:
+    type: int
+    required: false
+
+  remote-b-i3c:
+    type: phandle
+    required: false
+
+  remote-b-instance:
+    type: int
+    required: false

@@ -15,10 +15,7 @@ LOG_MODULE_REGISTER(mis_launch_m, CONFIG_LOG_DEFAULT_LEVEL);
 /* TODO: Better placement so we can re-place with one change instead of multiple. */
 #define MIS_ENTRY_POINT (0xC0067000)
 
-/* Writing K's outbound channel 0 triggers Keraunos's RX on its inbound channel 1 */
-#define K_MBOX_CHANNEL 0
-
-/* M-SMC-MIS signals readiness on M's own local mbox0, inbound channel 1 */
+/* Keraunos signals on M's local mbox0, inbound channel 1: first to proceed, then for M-SMC-MIS */
 #define MIS_MBOX_CHANNEL 1
 
 static void mis_mbox_rx_cb(const struct device *dev, mbox_channel_id_t channel_id, void *user_data,
@@ -32,33 +29,16 @@ static void mis_mbox_rx_cb(const struct device *dev, mbox_channel_id_t channel_i
 
 void launch_mis(void)
 {
-	const struct device *k_mbox = DEVICE_DT_GET(DT_NODELABEL(k_mbox));
-	uint64_t payload = 0;
-	struct mbox_msg msg = {
-		.data = &payload,
-		.size = sizeof(payload),
-	};
-	int ret;
-
-	LOG_INF("BL1 boot complete, signalling Keraunos via k_mbox");
-	if (!device_is_ready(k_mbox)) {
-		LOG_ERR("k_mbox device not ready");
-		return;
-	}
-	ret = mbox_send(k_mbox, K_MBOX_CHANNEL, &msg);
-	if (ret != 0) {
-		LOG_ERR("Failed to signal Keraunos over k_mbox: %d", ret);
-		return;
-	}
 	const struct device *mbox = DEVICE_DT_GET(DT_NODELABEL(mbox0));
 	struct k_sem ready_sem;
+	int ret;
 
 	if (!device_is_ready(mbox)) {
 		LOG_ERR("mbox0 device not ready");
 		return;
 	}
 
-	k_sem_init(&ready_sem, 0, 1);
+	k_sem_init(&ready_sem, 0, 2);
 
 	ret = mbox_register_callback(mbox, MIS_MBOX_CHANNEL, mis_mbox_rx_cb, &ready_sem);
 	if (ret != 0) {
@@ -72,6 +52,10 @@ void launch_mis(void)
 		(void)mbox_set_enabled(mbox, MIS_MBOX_CHANNEL, false);
 		return;
 	}
+
+	LOG_INF("Waiting for Keraunos proceed signal on mbox channel %d", MIS_MBOX_CHANNEL);
+	k_sem_take(&ready_sem, K_FOREVER);
+	LOG_INF("Keraunos signalled proceed");
 
 	LOG_INF("Waiting for M-SMC-MIS ready signal on mbox channel %d", MIS_MBOX_CHANNEL);
 	k_sem_take(&ready_sem, K_FOREVER);
