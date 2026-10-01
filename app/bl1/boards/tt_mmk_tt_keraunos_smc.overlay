@@ -15,14 +15,61 @@
 / {
 	mimir_boot: mimir-remote-boot {
 		compatible = "tenstorrent,mimir-remote-boot";
-		smc-remoteproc = <&remoteproc>;
+		smc-remoteproc = <&remoteproc_m1 &remoteproc_m0>;
+		mis-mbox = <&m1_mbox &m0_mbox>;
+		mis-spa-bases = <0x13 0x08000000 0x13 0x00000000>;
 		fw-toc-index = <1>;
 		d2d-fw-toc-index = <2>;
 		gddr-params-toc-index = <3>;
+
+		local_d2d_links: local-d2d-links {
+			k_d2d2_m1_d2d1: d2d-link-k-d2d2-m1-d2d1 {
+				compatible = "tenstorrent,d2d-link";
+				local-d2d = <&d2d2>;
+				remote-i3c = <&grendel_i3c_controller_m1>;
+				remote-instance = <1>;
+				status = "okay";
+			};
+		};
+
+		remote_d2d_links: remote-d2d-links {
+			m1_d2d0_m0_d2d1: d2d-link-m1-d2d0-m0-d2d1 {
+				compatible = "tenstorrent,d2d-link";
+				remote-a-i3c = <&grendel_i3c_controller_m1>;
+				remote-a-instance = <0>;
+				remote-b-i3c = <&grendel_i3c_controller_m0>;
+				remote-b-instance = <1>;
+				status = "okay";
+			};
+		};
+	};
+
+	grendel_i3c_controller_m0: grendel-i3c-controller-m0 {
+		compatible = "tenstorrent,grendel-i3c-controller";
+		i3c-device = <&remoteproc_m0>;
+	};
+
+	grendel_i3c_controller_m1: grendel-i3c-controller-m1 {
+		compatible = "tenstorrent,grendel-i3c-controller";
+		i3c-device = <&remoteproc_m1>;
 	};
 };
 
+&remoteproc_m0 {
+	status = "okay";
+};
+
+&remoteproc_m1 {
+	status = "okay";
+};
+
 &{/soc} {
+	d2d2: d2d@10600000 {
+		compatible = "tenstorrent,grendel-d2d";
+		reg = <0x0 0x10600000 0x0 0x00180158>;
+		status = "okay";
+	};
+
 	host_boot_state: scratch-reg@c0010160 {
 		/* SCRATCH[12] */
 		compatible = "tenstorrent,scratch-reg";
@@ -35,6 +82,13 @@
 		compatible = "tenstorrent,scratch-reg";
 		reg = <0x0 0xc0010150 0x0 0x4>;
 		status = "okay";
+	};
+
+	m0_mbox: mbox@1300018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x13 0x00018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
 	};
 
 	m1_mbox: mbox@1308018000 {

@@ -22,6 +22,21 @@ properties:
       List of tenstorrent,smc-remoteproc devices, one per Mimir, used to
       OCCP-load and start Mimir.
 
+  mis-mbox:
+    type: phandles
+    required: false
+    description: |
+      Optional list of mailboxes, one per Mimir, used to prompt each Mimir
+      to jump to its MIS image after the image has been copied over.
+
+  mis-spa-bases:
+    type: array
+    required: false
+    description: |
+      SPA base of each Mimir's core-local address window, as {hi, lo} 32-bit
+      cell pairs in the same order as mis-mbox. The MIS image load address in
+      the bundle is core-local, and is added to this base to reach each Mimir.
+
   fw-toc-index:
     type: int
     default: 1

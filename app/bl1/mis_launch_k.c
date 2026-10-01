@@ -10,6 +10,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/mbox.h>
 #include <zephyr/drivers/misc/tt_bundle_loader.h>
+#include <zephyr/drivers/misc/tt_mimir_remote_boot.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/sys_io.h>
@@ -17,8 +18,6 @@
 #include <errno.h>
 
 LOG_MODULE_REGISTER(mis_launch_k, CONFIG_LOG_DEFAULT_LEVEL);
-
-#define MIS_MBOX_CHANNEL 1
 
 #define HOST_BOOT_STATE_ADDR   ((uintptr_t)DT_REG_ADDR(DT_NODELABEL(host_boot_state)))
 #define BUNDLE_VALIDATION_ADDR ((uintptr_t)DT_REG_ADDR(DT_NODELABEL(bundle_validation)))
@@ -32,65 +31,8 @@ LOG_MODULE_REGISTER(mis_launch_k, CONFIG_LOG_DEFAULT_LEVEL);
 #define BUNDLE_READY_FOR_VALIDATION_BIT BIT(0)
 #define BUNDLE_VALIDATED_BIT            BIT(1)
 
-/* Writing M's outbound channel 0 triggers Mimir's RX on its inbound channel 1 */
-#define M_MBOX_CHANNEL 0
-
-static void mis_mbox_rx_cb(const struct device *dev, mbox_channel_id_t channel_id, void *user_data,
-			   struct mbox_msg *msg)
-{
-	ARG_UNUSED(dev);
-	ARG_UNUSED(channel_id);
-	ARG_UNUSED(msg);
-	k_sem_give((struct k_sem *)user_data);
-}
-
-static int wait_mimir_boot_complete(void)
-{
-	const struct device *mbox = DEVICE_DT_GET(DT_NODELABEL(mbox0));
-	struct k_sem ready_sem;
-
-	k_sem_init(&ready_sem, 0, 1);
-
-	if (!device_is_ready(mbox)) {
-		LOG_ERR("mbox0 device is not ready");
-		return -ENODEV;
-	}
-
-	int ret = mbox_register_callback(mbox, MIS_MBOX_CHANNEL, mis_mbox_rx_cb, &ready_sem);
-
-	if (ret != 0) {
-		LOG_ERR("Failed to register mbox callback: %d", ret);
-		return ret;
-	}
-
-	ret = mbox_set_enabled(mbox, MIS_MBOX_CHANNEL, true);
-	if (ret != 0) {
-		LOG_ERR("Failed to enable mbox channel %d: %d", MIS_MBOX_CHANNEL, ret);
-		return ret;
-	}
-
-	LOG_INF("Waiting for Mimir ready signal on mbox channel %d", MIS_MBOX_CHANNEL);
-	k_sem_take(&ready_sem, K_FOREVER);
-
-	LOG_INF("Mimir signalled ready");
-	mbox_set_enabled(mbox, MIS_MBOX_CHANNEL, false);
-	return 0;
-}
-
 void launch_mis(void)
 {
-	const struct device *m1_mbox = DEVICE_DT_GET(DT_NODELABEL(m1_mbox));
-	uint64_t payload = 0;
-	struct mbox_msg msg = {
-		.data = &payload,
-		.size = sizeof(payload),
-	};
-
-	/*First, wait for mimir boot to complete. */
-	if (wait_mimir_boot_complete() < 0) {
-		return;
-	}
-
 	/* Pre-emptively Clear bundle validation */
 	sys_write32(0, BUNDLE_VALIDATION_ADDR);
 
@@ -137,19 +79,14 @@ void launch_mis(void)
 		return;
 	}
 
-	/*memcpy to Mimir
-	 * TODO - Use DM
-	 */
-	memcpy((void *)m_mis_entry->load_addr,
-	       (const void *)(TT_BUN3_STAGING_AREA_ADDR + manifest->payload_offset +
-			      m_mis_entry->offset),
-	       m_mis_entry->length);
-
-	/* Prod Mimir mbox to prompt it to jump to its MIS image */
-	int ret = mbox_send(m1_mbox, M_MBOX_CHANNEL, &msg);
+	/* Prod each Mimir to jump to its MIS image after copying it over */
+	int ret = tt_mimir_remote_boot_launch_mis(
+		DEVICE_DT_GET(DT_NODELABEL(mimir_boot)), m_mis_entry,
+		(const void *)(TT_BUN3_STAGING_AREA_ADDR + manifest->payload_offset +
+			       m_mis_entry->offset));
 
 	if (ret != 0) {
-		LOG_ERR("Failed to signal Mimir over m_mbox: %d", ret);
+		LOG_ERR("Failed to launch MIS on Mimir: %d", ret);
 	}
 	/* We don't have to copy the image. BUN3 is placed so that we can immediately jump to the
 	 * right location
