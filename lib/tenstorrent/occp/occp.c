@@ -78,6 +78,7 @@ static int occp_tx_rx(const struct occp_backend *backend, uint8_t *cmd, size_t c
 		LOG_ERR("Failed to send OCCP command: %d", ret);
 		return ret;
 	}
+	k_msleep(100);
 	ret = backend->receive(backend, response, response_len);
 	if (ret != 0) {
 		LOG_ERR("Failed to read OCCP response: %d", ret);
@@ -261,6 +262,7 @@ int occp_execute_image(const struct occp_backend *backend, uint64_t execution_ad
 		LOG_ERR("Failed to send OCCP EXECUTE_IMAGE command: %d", ret);
 		return ret;
 	}
+	k_msleep(100);
 	/* Read execute image response */
 	ret = backend->receive(backend, (uint8_t *)&exec_resp, sizeof(exec_resp));
 	if (ret != 0) {

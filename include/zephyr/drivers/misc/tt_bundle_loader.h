@@ -26,6 +26,19 @@ extern "C" {
 /** @brief "PTOC" - FW_BUNDLE_TOC_ID*/
 #define FW_BUNDLE_TOC_ID (0x434f5450U)
 
+/** @brief Base address of where we should stage D2D FW over OCCP */
+#define TT_D2D_OCCP_STAGE_ADDR 0xc0066400UL
+
+/**
+ * @brief Size in bytes of the length header OCCP-written at TT_D2D_OCCP_STAGE_ADDR.
+ *
+ * OCCP has no side channel for metadata, so the D2D FW image length is
+ * smuggled in as a little-endian uint32_t placed right before the image
+ * itself: the header lives at TT_D2D_OCCP_STAGE_ADDR and the image starts at
+ * TT_D2D_OCCP_STAGE_ADDR + TT_D2D_FW_HEADER_SIZE.
+ */
+#define TT_D2D_FW_HEADER_SIZE 4U
+
 /** @brief Base address of the BUN1 staging area in SMC local address space */
 #define TT_BUN1_STAGING_AREA_ADDR 0xc0066400UL
 
