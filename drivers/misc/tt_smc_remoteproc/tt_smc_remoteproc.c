@@ -89,19 +89,19 @@ int tt_smc_remoteproc_init(const struct device *dev)
 		}
 
 		LOG_INF("Remote SMC ROM is ready");
-
-		/*
-		 * Remote SMC is now on the I3C bus, run dynamic address assignment
-		 * once more so that the controller discovers it
-		 */
-
-		ret = i3c_do_daa(data->i3c_dev->bus);
-		if (ret != 0) {
-			LOG_INF("I3C dynamic address assignment failed: %d", ret);
-			return ret;
-		}
 	} else {
-		LOG_INF("boot-gpios not configured; skipping GPIO wait and DAA");
+		LOG_INF("boot-gpios not configured; skipping GPIO wait");
+	}
+
+	/*
+	 * Remote SMC is now on the I3C bus, run dynamic address assignment
+	 * once more so that the controller discovers it
+	 */
+
+	ret = i3c_do_daa(data->i3c_dev->bus);
+	if (ret != 0) {
+		LOG_INF("I3C dynamic address assignment failed: %d", ret);
+		return ret;
 	}
 
 	/* Now that DAA is complete, find the device on the bus */
