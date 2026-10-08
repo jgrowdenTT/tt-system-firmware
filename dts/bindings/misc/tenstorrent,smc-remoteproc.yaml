@@ -13,5 +13,5 @@ properties:
     type: phandle-array
     description: |
       Optional GPIO used to signal when the remote processor ROM is ready.
-      If omitted, the driver skips GPIO wait and does not perform an
+      If omitted, the driver skips the GPIO wait but still performs an
       additional DAA during initialization.
