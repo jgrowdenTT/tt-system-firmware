@@ -1,0 +1,111 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <tenstorrent/tt_grendel_smc.dtsi>
+#include <tenstorrent/tt_keraunos_d2d.dtsi>
+
+/ {
+	vuarts {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		vuart0: uart_tt_virt@0 {
+			compatible = "tenstorrent,vuart";
+			version = <0x00000000>;
+			reg = <0x0>;
+			tx-cap = <11228>;
+			memory-region = <&vuart_ram>;
+			status = "okay";
+		};
+	};
+
+	chosen {
+		zephyr,sram = &ram0;
+		zephyr,console = &vuart0;
+		zephyr,shell-uart = &vuart0;
+	};
+
+	msgqueue_mbox: msgqueue_mbox {
+		compatible = "tenstorrent,msgqueue-mbox";
+		mboxes = <&mbox0 1>;
+		mbox-names = "doorbell";
+		status = "okay";
+	};
+};
+
+&i3c1 {
+	status = "okay";
+	input-clock-frequency = <200000000>;
+	i3c-scl-hz = <1000000>;
+	i2c-scl-hz = <400000>;
+
+	remoteproc_m0: remoteproc@0a7c0013f000 {
+		compatible = "tenstorrent,smc-remoteproc";
+		/* No static address, PID of 0x0a7c0013f000 */
+		reg = <0x0 0x0a7c 0x0013f000>;
+		status = "disabled";
+	};
+
+	remoteproc_m1: remoteproc@0a7c0013f001 {
+		compatible = "tenstorrent,smc-remoteproc";
+		/* No static address, PID of 0x0a7c0013f001 */
+		reg = <0x0 0x0a7c 0x0013f001>;
+		status = "disabled";
+	};
+
+	remoteproc_m2: remoteproc@0a7c0013f002 {
+		compatible = "tenstorrent,smc-remoteproc";
+		/* No static address, PID of 0x0a7c0013f002 */
+		reg = <0x0 0x0a7c 0x0013f002>;
+		status = "disabled";
+	};
+
+	remoteproc_m3: remoteproc@0a7c0013f003 {
+		compatible = "tenstorrent,smc-remoteproc";
+		/* No static address, PID of 0x0a7c0013f003 */
+		reg = <0x0 0x0a7c 0x0013f003>;
+		status = "disabled";
+	};
+
+	remoteproc_q0: remoteproc@0a7c0013f004 {
+		compatible = "tenstorrent,smc-remoteproc";
+		/* No static address, PID of 0x0a7c0013f004 */
+		reg = <0x0 0x0a7c 0x0013f004>;
+		status = "disabled";
+	};
+};
+
+&{/soc} {
+	pcie0: pcie@18000000 {
+		compatible = "tenstorrent,grendel-pcie";
+		reg = <0x0 0x18000000 0x0 0x1000000>;
+		/* QEMU 64 GiB; silicon aperture comes later. */
+		bar4-size = <0x10 0x0>;
+		status = "okay";
+	};
+
+	/* Cold Scratch 3 */
+	msgqueue_info: scratch-reg@c000280c {
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc000280c 0x0 0x4>;
+		status = "okay";
+	};
+
+	sep_safe_off: scratch-reg@c0010168 {
+		/* SCRATCH[13], SEP-safe SRAM offset in [13:0] */
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc0010168 0x0 0x4>;
+	};
+
+	sep_safe_size: scratch-reg@c0010170 {
+		/* SCRATCH[14], SEP-safe SRAM size */
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc0010170 0x0 0x4>;
+	};
+};

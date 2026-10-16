@@ -1,0 +1,14 @@
+identifier: tt_qsr1a1/tt_quasar/smc
+name: Tenstorrent Quasar 1 A1 SMC
+type: mcu
+arch: riscv
+toolchain:
+  - zephyr
+ram: 1048576
+testing:
+  ignore_tags:
+    - net
+    - bluetooth
+supported:
+  - gpio
+vendor: tenstorrent

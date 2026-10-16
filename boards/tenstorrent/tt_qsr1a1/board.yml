@@ -1,0 +1,8 @@
+board:
+  name: tt_qsr1a1
+  full_name: Tenstorrent Quasar 1 A1 Board
+  vendor: tenstorrent
+  socs:
+    - name: tt_quasar
+    - name: tt_keraunos
+    - name: tt_mimir

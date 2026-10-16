@@ -7,3 +7,6 @@ family:
       - name: tt_mimir
         cpuclusters:
           - name: smc
+      - name: tt_quasar
+        cpuclusters:
+          - name: smc

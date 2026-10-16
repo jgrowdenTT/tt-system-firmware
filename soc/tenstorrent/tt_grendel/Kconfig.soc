@@ -12,6 +12,7 @@ rsource "*/Kconfig.soc"
 config SIVAL_SDK
 	bool
 	default y if SOC_TT_KERAUNOS_SMC
+	default y if SOC_TT_QUASAR_SMC
 	help
 	  Indicates we are building with the SiVal SDK (tarball currently not in tree).
 	  For source files using the definitions in the SiVal "sources" tarball, we
