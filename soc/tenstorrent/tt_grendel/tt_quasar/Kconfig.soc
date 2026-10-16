@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Tenstorrent AI ULC
+# SPDX-License-Identifier: Apache-2.0
+
+# Quasar SMC core- the same Grendel SMC RISC-V core as Mimir and Keraunos
+config SOC_TT_QUASAR_SMC
+	bool
+	select SOC_FAMILY_TT_GRENDEL
+	select TT_GRENDEL_SMC
+	help
+	  Tenstorrent Quasar System Management Controller (SMC)
+
+config SOC
+	default "tt_quasar" if SOC_TT_QUASAR_SMC
