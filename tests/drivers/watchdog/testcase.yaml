@@ -8,3 +8,5 @@ tests:
       - tt_qsr1a1/tt_keraunos/smc
       - tt_qsr1a1/tt_mimir/smc
       - tt_qsr1a1/tt_quasar/smc
+    extra_args:
+      - DTC_OVERLAY_FILE=tt_grendel.overlay
