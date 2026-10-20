@@ -52,48 +52,6 @@ ZTEST(tt_pcie, test_endpoint_ready)
 	zassert_true(device_is_ready(pcie0), "pcie0 not ready");
 	STEP(T_READY, 2);
 	PASSED(P_READY);
-
-	/*
-	 * Device init trained the link (HW_INIT). Stay in a busy loop so the
-	 * endpoint remains enumerated; do not sleep (emul mtime is ~10x slow).
-	 * The suite never reaches TC_END_REPORT, so write the pass token here.
-	 */
-	test_pass();
-	while (1) {
-	}
 }
 
-/*
- * The harness's verdict is ztest's own, and ztest can fail a run for reasons
- * no individual test reports. With no readable console, publishing the
- * framework's counters separates "a test failed" from "every test passed and
- * the run was failed anyway". Reached only if test_endpoint_ready returned.
- */
-static void tt_pcie_teardown(void *fixture)
-{
-	uint32_t run = 0;
-	uint32_t pass = 0;
-	uint32_t fail = 0;
-	uint32_t skip = 0;
-	uint32_t inconsistent = 0;
-
-	ARG_UNUSED(fixture);
-
-	for (struct ztest_unit_test *t = _ztest_unit_test_list_start; t < _ztest_unit_test_list_end;
-	     t++) {
-		run += t->stats->run_count;
-		pass += t->stats->pass_count;
-		fail += t->stats->fail_count;
-		skip += t->stats->skip_count;
-
-		if (t->stats->pass_count + t->stats->fail_count + t->stats->skip_count !=
-		    t->stats->run_count) {
-			inconsistent = 1;
-		}
-	}
-
-	WRITE_SCRATCH(4, 0xC0000000U | (run << 16) | (pass << 12) | (fail << 8) | (skip << 4) |
-				 inconsistent);
-}
-
-ZTEST_SUITE(tt_pcie, NULL, NULL, NULL, NULL, tt_pcie_teardown);
+ZTEST_SUITE(tt_pcie, NULL, NULL, NULL, NULL, NULL);
