@@ -3,6 +3,6 @@ common:
     - drivers
 tests:
   drivers.tt_pcie.endpoint:
-    build_only: true
+    tags: smoke
     platform_allow:
       - tt_mmk/tt_keraunos/smc
