@@ -5,13 +5,10 @@ zephyr_include_directories(.)
 # SiVal registers/platform.h requires a platform select (ker_smc).
 zephyr_compile_definitions(PLATFORM_KER_SMC=1)
 
-set(SIVAL_EXTDIR ${CMAKE_BINARY_DIR}/grendel-sival-sdk)
 set(SIVAL_BLOBS_TARBALL ${CMAKE_CURRENT_SOURCE_DIR}/../../../../zephyr/blobs/grendel-sival-sdk.tar.gz)
 
-file(MAKE_DIRECTORY ${SIVAL_EXTDIR})
-execute_process(COMMAND tar -xzf ${SIVAL_BLOBS_TARBALL}
-  WORKING_DIRECTORY ${SIVAL_EXTDIR}
-)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/sival_sdk.cmake)
+tt_sival_sdk_extract(${SIVAL_BLOBS_TARBALL})
 zephyr_include_directories(${SIVAL_EXTDIR})
 zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/common/include/registers)
 zephyr_include_directories(${SIVAL_EXTDIR}/grendel_sival_sdk/common/include/registers/common)
