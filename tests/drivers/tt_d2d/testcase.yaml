@@ -3,7 +3,8 @@ common:
     - drivers
 tests:
   drivers.tt_d2d.load:
-    build_only: true
+    tags:
+      - smoke
     platform_allow:
       - tt_mimir/tt_mimir/smc
       - tt_mmk/tt_mimir/smc
