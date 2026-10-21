@@ -283,7 +283,7 @@
 		dma0: dma@c0038000 {
 			compatible = "tenstorrent,grendel-smc-dma";
 			reg = <0x0 0xc0038000 0x0 0x138>;
-			dma-channels = <1>;
+			dma-channels = <16>;
 			#dma-cells = <1>;
 			status = "okay";
 		};
