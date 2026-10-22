@@ -93,6 +93,11 @@ def generate_recovery_assets(boardname, board_data, outdir, signing_key):
             dmc_board,
             "--sysbuild",
             str(app_dir / "dmc"),
+            # Shell over RTT for the DMC recovery image only (sysbuild image "dmc")
+            "-Ddmc_CONFIG_SHELL=y",
+            "-Ddmc_CONFIG_SHELL_BACKEND_RTT=y",
+            "-Ddmc_CONFIG_SHELL_LOG_BACKEND=y",
+            "-Ddmc_CONFIG_LOG_BACKEND_RTT=n",
         ]
         if signing_key:
             cmd += ['-DSB_CONFIG_BOOT_SIGNATURE_KEY_FILE="' + str(signing_key) + '"']
