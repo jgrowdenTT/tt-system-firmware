@@ -11,6 +11,13 @@ endif()
 
 if(CONFIG_ARM)
   board_runner_args(stm32cubeprogrammer "--port=swd" "--reset-mode=hw")
+
+  # p300a uses the LQFP100 package (stm32g0b1v), all other DMCs use LQFP48 (stm32g0b1c)
+  if(CONFIG_BOARD_REVISION_P300A OR CONFIG_BOARD_REVISION_P300B OR CONFIG_BOARD_REVISION_P300C)
+    board_runner_args(pyocd "--target=stm32g0b1vetx")
+  else()
+    board_runner_args(pyocd "--target=stm32g0b1ceux")
+  endif()
 endif()
 
 if(CONFIG_TT_SRST_ASSIST)
@@ -59,6 +66,7 @@ endif()
 
 if(CONFIG_ARM)
   include(${ZEPHYR_BASE}/boards/common/stm32cubeprogrammer.board.cmake)
+  include(${ZEPHYR_BASE}/boards/common/pyocd.board.cmake)
 endif()
 
 if(CONFIG_SOC_TT_BLACKHOLE_SMC)
