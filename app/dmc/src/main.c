@@ -528,6 +528,7 @@ static void handle_therm_trip(void)
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (chip->data.therm_trip_triggered) {
 			chip->data.therm_trip_triggered = false;
+			LOG_WRN("Thermal trip detected, resetting chip");
 
 			if (board_fault_led.port != NULL) {
 				gpio_pin_set_dt(&board_fault_led, 1);
@@ -572,6 +573,7 @@ static void handle_watchdog_reset(void)
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (chip->data.arc_wdog_triggered) {
 			chip->data.arc_wdog_triggered = false;
+			LOG_WRN("ARC watchdog expired, resetting chip");
 			bh_chip_cancel_bus_transfer_clear(chip);
 			/* Read PC from ARC and record it */
 			jtag_setup(chip->config.jtag);
@@ -604,6 +606,7 @@ static void handle_perst(void)
 {
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (atomic_set(&chip->data.trigger_reset, false)) {
+			LOG_INF("PERST triggered, resetting ASIC");
 			chip->data.performing_reset = true;
 			chip->data.last_cm2dm_seq_num_valid = false;
 			/*
@@ -737,12 +740,14 @@ int main(void)
 		}
 	}
 
+	LOG_INF("Fan speed...");
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		chip->data.fan_speed = INITIAL_FAN_SPEED;
 	}
 
 	update_fan_speed(false);
 
+	LOG_INF("boot image...");
 	if (bist_rc == 0 && !boot_is_img_confirmed()) {
 		ret = boot_write_img_confirmed();
 		if (ret < 0) {
@@ -753,6 +758,7 @@ int main(void)
 	}
 
 	/* Force spi_mux back to arc (flash -> BH); on GLX2 also park mux1 on DMC */
+	LOG_INF("Spi Mux...");
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (chip->config.spi_mux.port != NULL) {
 			gpio_pin_configure_dt(&chip->config.spi_mux, GPIO_OUTPUT_ACTIVE);
@@ -761,11 +767,12 @@ int main(void)
 			gpio_pin_configure_dt(&chip->config.spi_mux1, GPIO_OUTPUT_ACTIVE);
 		}
 	}
-
+	LOG_INF("GPIO setup...");
 	/* Set up GPIOs */
 	if (board_fault_led.port != NULL) {
 		gpio_pin_configure_dt(&board_fault_led, GPIO_OUTPUT_INACTIVE);
 	}
+
 
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		ret = therm_trip_gpio_setup(chip);
@@ -780,20 +787,23 @@ int main(void)
 		}
 	}
 
+	LOG_INF("Cable fault...");
 	/* Detect cable power limit early, before JTAG bootrom sequence.
 	 * This value will be written to a scratch register for SMC to read at boot.
 	 */
 	max_power = detect_max_power();
 
+	LOG_INF("Clk gen...");
 	/* Program clock generator on I2C1 before JTAG bootrom sequence*/
-	if (i2c1_bus != NULL) {
-		ret = clk_gen_program(i2c1_bus);
-		if (ret != 0) {
-			LOG_ERR("clk_gen_program failed: %d", ret);
-			return ret;
-		}
-	}
+	//if (i2c1_bus != NULL) {
+	//	ret = clk_gen_program(i2c1_bus);
+	//	if (ret != 0) {
+	//		LOG_ERR("clk_gen_program failed: %d", ret);
+	//		return ret;
+	//	}
+	//}
 
+	LOG_INF("Bootrom init...");
 	if (IS_ENABLED(CONFIG_JTAG_LOAD_BOOTROM)) {
 		ARRAY_FOR_EACH_BH_CHIP(chip) {
 			ret = jtag_bootrom_init(chip);
@@ -825,7 +835,7 @@ int main(void)
 		bh_chip_cancel_bus_transfer_clear(chip);
 	}
 
-	printk("DMFW VERSION " APP_VERSION_STRING "\n");
+	LOG_INF("DMFW VERSION " APP_VERSION_STRING "\n");
 
 	/* For manufacturing, keep the red LED solid on so it can be visually inspected. */
 	if (IS_ENABLED(CONFIG_TT_ASSEMBLY_TEST) && board_fault_led.port != NULL) {
@@ -835,6 +845,7 @@ int main(void)
 	k_timer_start(&shared_20ms_event_timer, K_MSEC(20), K_MSEC(20));
 	k_timer_start(&board_power_update_timer, K_MSEC(1), K_MSEC(1));
 
+	LOG_INF("Main loop...");
 	while (true) {
 		uint32_t events = tt_event_wait(TT_EVENT_ANY, K_FOREVER);
 

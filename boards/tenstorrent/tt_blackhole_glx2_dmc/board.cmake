@@ -4,5 +4,6 @@
 board_runner_args(stm32cubeprogrammer "--port=swd" "--reset-mode=hw")
 board_runner_args(pyocd "--target=stm32u375veix")
 
-include(${ZEPHYR_BASE}/boards/common/stm32cubeprogrammer.board.cmake)
+# Include order matters: the first included sets the default flash/debug runner
 include(${ZEPHYR_BASE}/boards/common/pyocd.board.cmake)
+include(${ZEPHYR_BASE}/boards/common/stm32cubeprogrammer.board.cmake)
