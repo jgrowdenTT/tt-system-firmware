@@ -518,7 +518,7 @@ static int bh_chip_run_smbus_tests(struct bh_chip *chip)
 		LOG_DBG("Failed to write to SMBUS scratch register");
 		return ret;
 	}
-	printk("SMBUS tests passed\n");
+	LOG_INF("SMBUS tests passed");
 #endif
 	return 0;
 }
