@@ -43,6 +43,9 @@
 #define StartGddrThermTripMonitor_PRIO        120
 #define bh_arc_init_end_PRIO                  121
 
+/* Same level as StartGddrThermTripMonitor; only needs to run after gddr_training. */
+#define bh_power_default_off_PRIO             120
+
 #define SYS_INIT_APP(func) SYS_INIT(func, POST_KERNEL, func##_PRIO)
 
 #endif

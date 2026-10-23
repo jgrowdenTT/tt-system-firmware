@@ -88,6 +88,12 @@
 		gpios = <&gpioc 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 	};
 
+	/* POWER_ON-dmc monitor input */
+	power_on_dmc: POWER_ON-dmc {
+		compatible = "zephyr,gpio-line";
+		gpios = <&gpiob 15 GPIO_ACTIVE_HIGH>;
+	};
+
 	chips {
 		compatible = "tenstorrent,bh-chips";
 		chips = <&chip0>;
