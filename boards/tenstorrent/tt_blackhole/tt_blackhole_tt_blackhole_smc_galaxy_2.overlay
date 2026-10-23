@@ -21,3 +21,8 @@
 &boot_fallback {
 	binary-path = "$BUILD_DIR/mcuboot/zephyr/zephyr.bin";
 };
+
+/* Larger console ring for bring-up; nothing drains it on GLX2, so boot logs are lost otherwise */
+&vuart0 {
+	tx-cap = <16384>;
+};
