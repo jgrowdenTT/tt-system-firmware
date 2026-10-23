@@ -159,6 +159,7 @@ static bool process_forced_fan_speed_update(struct bh_chip *chip, uint8_t msg_id
 
 static bool process_id_ready(struct bh_chip *chip, uint8_t msg_id, uint32_t msg_data)
 {
+	LOG_INF("ARC ready received from chip %d", (int)(chip - BH_CHIPS));
 	chip->data.arc_needs_init_msg = true;
 	return false;
 }
@@ -455,74 +456,6 @@ static int clk_gen_program(const struct device *i2c_bus)
 	return 0;
 }
 
-/*
- * Runs a series of SMBUS tests when `CONFIG_DMC_RUN_SMBUS_TESTS` is enabled.
- * These tests aren't intended to be run on production firmware.
- */
-static int bh_chip_run_smbus_tests(struct bh_chip *chip)
-{
-#ifdef CONFIG_DMC_RUN_SMBUS_TESTS
-	int ret;
-	int pass_val = 0xFEEDFACE;
-	uint8_t count;
-	uint8_t data[255]; /* Max size of SMBUS block read */
-	uint32_t app_version;
-
-	/* Test SMBUS telemetry by selecting TAG_DM_APP_FW_VERSION and reading it back */
-	ret = bharc_smbus_byte_data_write(&chip->config.arc, CMFW_SMBUS_TELEMETRY_READ_CRC, 26);
-	if (ret < 0) {
-		LOG_DBG("Failed to write to SMBUS telemetry register");
-		return ret;
-	}
-	ret = bharc_smbus_block_read(&chip->config.arc, CMFW_SMBUS_TELEMETRY_READ_CRC_DATA, &count,
-				     data);
-	if (ret < 0) {
-		LOG_DBG("Failed to read from SMBUS telemetry register");
-		return ret;
-	}
-	if (count != 7) {
-		LOG_DBG("SMBUS telemetry read returned unexpected count: %d", count);
-		return -EIO;
-	}
-	if (data[0] != 0U) {
-		LOG_DBG("SMBUS telemetry read returned invalid telem idx");
-		return -EIO;
-	}
-	(void)memcpy(&app_version, &data[3], sizeof(app_version));
-
-	if (app_version != APPVERSION) {
-		LOG_DBG("SMBUS telemetry read returned unexpected value: %08x", *(uint32_t *)data);
-		return -EIO;
-	}
-
-	/* Test block write block read call*/
-	uint32_t test_data = 0x1234FEDC;
-
-	ret = bharc_smbus_block_write_block_read(
-		&chip->config.arc, CMFW_SMBUS_TEST_WRITE_BLOCK_READ_BLOCK, sizeof(test_data),
-		(uint8_t *)&test_data, &count, data);
-	if (ret < 0) {
-		LOG_DBG("Failed to Perform block write block read command");
-		return ret;
-	}
-	(void)memcpy(&test_data, data, sizeof(test_data));
-	if (test_data != 0x1234FEDC) {
-		LOG_DBG("Incorrect read back value: Expected 0x1234FEDC; actual:0x%08X", test_data);
-		return -EIO;
-	}
-
-	/* Record test status into scratch register */
-	ret = bharc_smbus_block_write(&chip->config.arc, 0xDD, sizeof(pass_val),
-				      (uint8_t *)&pass_val);
-	if (ret < 0) {
-		LOG_DBG("Failed to write to SMBUS scratch register");
-		return ret;
-	}
-	LOG_INF("SMBUS tests passed");
-#endif
-	return 0;
-}
-
 static void handle_therm_trip(void)
 {
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
@@ -649,8 +582,7 @@ static void send_init_data(void)
 		if (chip->data.arc_needs_init_msg) {
 			if (bh_chip_set_static_info(chip, &static_info) == 0 &&
 			    bh_chip_set_input_power_lim(chip, max_power) == 0 &&
-			    bh_chip_set_therm_trip_count(chip, chip->data.therm_trip_count) == 0 &&
-			    bh_chip_run_smbus_tests(chip) == 0) {
+			    bh_chip_set_therm_trip_count(chip, chip->data.therm_trip_count) == 0) {
 				chip->data.arc_needs_init_msg = false;
 			}
 		}

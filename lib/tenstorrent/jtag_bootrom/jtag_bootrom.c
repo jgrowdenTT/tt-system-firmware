@@ -67,6 +67,7 @@ static const struct gpio_dt_spec preset_trigger = GPIO_DT_SPEC_GET(DT_PATH(prese
 void gpio_asic_reset_callback(const struct device *port, struct gpio_callback *cb, uint32_t pins)
 {
 	perst_start_time = k_cycle_get_32();
+	LOG_INF("PERST asserted");
 
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		chip->data.perst_seen = true;
@@ -209,7 +210,11 @@ int jtag_bootrom_init(struct bh_chip *chip)
 	}
 
 	/* Active LOW, so will be false if high */
-	if (!gpio_pin_get_dt(&preset_trigger)) {
+	int perst_active = gpio_pin_get_dt(&preset_trigger);
+
+	LOG_INF("PERST at boot: %s (raw level %d)", perst_active ? "asserted" : "deasserted",
+		gpio_pin_get_raw(preset_trigger.port, preset_trigger.pin));
+	if (!perst_active) {
 		/* If the preset trigger started high, then we came out of reset with the
 		 * system
 		 */
@@ -217,6 +222,7 @@ int jtag_bootrom_init(struct bh_chip *chip)
 		 * workaround to
 		 * ensure this remains true.
 		 */
+		LOG_INF("PERST was already high at boot, forcing ASIC reset");
 		chip->data.trigger_reset = true;
 	}
 #endif /* IS_ENABLED(CONFIG_JTAG_LOAD_ON_PRESET) */

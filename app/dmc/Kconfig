@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 config DMC_RUN_SMBUS_TESTS
-	bool "Run SMBUS Tests"
+	bool "SMBUS test shell command"
 	help
-	  Run SMBUS tests on the DMC at boot time. This can be used to verify
-	  functionality of the SMBUS interface.
+	  Add the "smc smbus_test" shell command, which runs DMC<->SMC SMBus
+	  tests on demand. This can be used to verify functionality of the
+	  SMBUS interface.
 
 source "Kconfig.zephyr"

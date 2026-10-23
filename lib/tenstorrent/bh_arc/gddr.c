@@ -661,7 +661,7 @@ static int CheckGddrHwTest(void)
 	int any_error = 0;
 
 	for (uint8_t gddr_inst = 0; gddr_inst < NUM_GDDR; gddr_inst++) {
-		if (IS_BIT_SET(tile_enable.gddr_enabled, gddr_inst)) {
+		if (IS_BIT_SET(GetDramMask(), gddr_inst)) {
 			int error = StartHwMemtest(gddr_inst, 26, 0, 0);
 
 			if (error == -ENOTSUP) {

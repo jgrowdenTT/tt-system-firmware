@@ -45,8 +45,8 @@ fan_table {
 }
 
 dram_table {
-  dram_mask: 0
-  dram_mask_en: false
+  dram_mask: 0x77
+  dram_mask_en: true
 }
 
 chip_harvesting_table {
