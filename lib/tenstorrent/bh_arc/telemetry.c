@@ -347,10 +347,12 @@ static void UpdateGddrTelemetry(void)
 	uint32_t status = 0;
 	uint32_t speed = telemetry[TAG_GDDR_SPEED];
 
+	const uint32_t dram_mask = GetDramMask();
+
 	for (int i = 0; i < NUM_GDDR; i++) {
 		gddr_telemetry_table_t gddr_telemetry;
-		/* Harvested instances should read 0b00 for status. */
-		if (IS_BIT_SET(tile_enable.gddr_enabled, i)) {
+		/* Harvested or masked instances should read 0b00 for status. */
+		if (IS_BIT_SET(dram_mask, i)) {
 			if (read_gddr_telemetry_table(i, &gddr_telemetry) < 0) {
 				LOG_WRN_ONCE("Failed to read GDDR telemetry table while "
 					     "updating telemetry");
@@ -470,10 +472,10 @@ static void write_static_telemetry(uint32_t app_version)
 
 	/* Gather FW versions from FW themselves */
 	telemetry[TAG_ETH_FW_VERSION] = GetEthFwVersion(0);
-	if (tile_enable.gddr_enabled != 0) {
+	if (GetDramMask() != 0) {
 		gddr_telemetry_table_t gddr_telemetry;
 		/* Use first available instance. */
-		uint32_t gddr_inst = find_lsb_set(tile_enable.gddr_enabled) - 1;
+		uint32_t gddr_inst = find_lsb_set(GetDramMask()) - 1;
 
 		if (read_gddr_telemetry_table(gddr_inst, &gddr_telemetry) < 0) {
 			LOG_WRN_ONCE("Failed to read GDDR telemetry table while "

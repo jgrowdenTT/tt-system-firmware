@@ -298,7 +298,7 @@ static int LoadMriscFwCfg(uint8_t gddr_inst, uint8_t *buf, size_t buf_size, size
 	return rc;
 }
 
-static uint32_t GetDramMask(void)
+uint32_t GetDramMask(void)
 {
 	uint32_t dram_mask = tile_enable.gddr_enabled; /* bit mask */
 
