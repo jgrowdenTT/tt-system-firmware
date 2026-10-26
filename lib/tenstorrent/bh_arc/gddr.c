@@ -298,7 +298,7 @@ static int LoadMriscFwCfg(uint8_t gddr_inst, uint8_t *buf, size_t buf_size, size
 	return rc;
 }
 
-static uint32_t GetDramMask(void)
+uint32_t GetDramMask(void)
 {
 	uint32_t dram_mask = tile_enable.gddr_enabled; /* bit mask */
 
@@ -659,9 +659,10 @@ static int CheckGddrHwTest(void)
 	 */
 	uint8_t test_started = 0; /* Bitmask of tests started */
 	int any_error = 0;
+	uint32_t dram_mask = GetDramMask();
 
 	for (uint8_t gddr_inst = 0; gddr_inst < NUM_GDDR; gddr_inst++) {
-		if (IS_BIT_SET(tile_enable.gddr_enabled, gddr_inst)) {
+		if (IS_BIT_SET(dram_mask, gddr_inst)) {
 			int error = StartHwMemtest(gddr_inst, 26, 0, 0);
 
 			if (error == -ENOTSUP) {

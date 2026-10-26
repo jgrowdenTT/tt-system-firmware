@@ -74,6 +74,9 @@
 /** @brief MRISC message to run the memory test.*/
 #define MRISC_MSG_TYPE_RUN_MEMTEST   8
 
+/** @brief GDDR instances that are both unharvested and enabled by the FW table dram_mask. */
+uint32_t GetDramMask(void);
+
 int read_gddr_telemetry_table(uint8_t gddr_inst, gddr_telemetry_table_t *gddr_telemetry);
 
 /** @brief Top and bottom DRAM die temperatures for a single GDDR instance (degrees Celsius). */
