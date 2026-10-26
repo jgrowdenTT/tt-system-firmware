@@ -158,6 +158,7 @@ static bool process_forced_fan_speed_update(struct bh_chip *chip, uint8_t msg_id
 
 static bool process_id_ready(struct bh_chip *chip, uint8_t msg_id, uint32_t msg_data)
 {
+	LOG_INF("ARC ready received from chip %d", (int)(chip - BH_CHIPS));
 	chip->data.arc_needs_init_msg = true;
 	return false;
 }
@@ -408,7 +409,7 @@ static int bh_chip_run_smbus_tests(struct bh_chip *chip)
 		LOG_DBG("Failed to write to SMBUS scratch register");
 		return ret;
 	}
-	printk("SMBUS tests passed\n");
+	LOG_INF("SMBUS tests passed");
 #endif
 	return 0;
 }
@@ -418,6 +419,7 @@ static void handle_therm_trip(void)
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (chip->data.therm_trip_triggered) {
 			chip->data.therm_trip_triggered = false;
+			LOG_WRN("Thermal trip detected, resetting chip");
 
 			if (board_fault_led.port != NULL) {
 				gpio_pin_set_dt(&board_fault_led, 1);
@@ -462,6 +464,7 @@ static void handle_watchdog_reset(void)
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (chip->data.arc_wdog_triggered) {
 			chip->data.arc_wdog_triggered = false;
+			LOG_WRN("ARC watchdog expired, resetting chip");
 			bh_chip_cancel_bus_transfer_clear(chip);
 			/* Read PC from ARC and record it */
 			jtag_setup(chip->config.jtag);
@@ -494,6 +497,7 @@ static void handle_perst(void)
 {
 	ARRAY_FOR_EACH_BH_CHIP(chip) {
 		if (atomic_set(&chip->data.trigger_reset, false)) {
+			LOG_INF("PERST triggered, resetting ASIC");
 			chip->data.performing_reset = true;
 			chip->data.last_cm2dm_seq_num_valid = false;
 			/*
@@ -706,7 +710,7 @@ int main(void)
 		bh_chip_cancel_bus_transfer_clear(chip);
 	}
 
-	printk("DMFW VERSION " APP_VERSION_STRING "\n");
+	LOG_INF("DMFW VERSION " APP_VERSION_STRING);
 
 	/* For manufacturing, keep the red LED solid on so it can be visually inspected. */
 	if (IS_ENABLED(CONFIG_TT_ASSEMBLY_TEST) && board_fault_led.port != NULL) {

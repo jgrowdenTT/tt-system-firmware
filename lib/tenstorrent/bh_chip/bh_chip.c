@@ -265,6 +265,9 @@ void handle_pgood_event(struct bh_chip *chip, struct gpio_dt_spec board_fault_le
 {
 	if (chip->data.pgood_fall_triggered && !chip->data.pgood_severe_fault) {
 		int64_t current_uptime_ms = k_uptime_get();
+
+		LOG_WRN("pgood fell, asserting ASIC reset (last trip %lld ms)",
+			chip->data.pgood_last_trip_ms);
 		/* Assert board fault */
 		gpio_pin_set_dt(&board_fault_led, 1);
 		/* Report over SMBus - to add later */
@@ -275,11 +278,13 @@ void handle_pgood_event(struct bh_chip *chip, struct gpio_dt_spec board_fault_le
 		    current_uptime_ms - chip->data.pgood_last_trip_ms < 1000) {
 			/* Assert more severe fault over IPMI - to add later */
 			chip->data.pgood_severe_fault = true;
+			LOG_ERR("pgood fell twice within 1s, severe fault: ASIC held in reset");
 		}
 		chip->data.pgood_last_trip_ms = current_uptime_ms;
 		chip->data.pgood_fall_triggered = false;
 	}
 	if (chip->data.pgood_rise_triggered && !chip->data.pgood_severe_fault) {
+		LOG_WRN("pgood rose, resetting chip");
 		/* Follow out of reset procedure */
 		bh_chip_reset_chip(chip, true);
 		/*
