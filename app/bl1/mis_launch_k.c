@@ -10,7 +10,9 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/mbox.h>
 #include <zephyr/drivers/misc/tt_bundle_loader.h>
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(mimir_boot))
 #include <zephyr/drivers/misc/tt_mimir_remote_boot.h>
+#endif
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/sys_io.h>
@@ -61,21 +63,22 @@ void launch_mis(void)
 	const struct fw_bundle_toc *toc = (const struct fw_bundle_toc *)(TT_BUN3_STAGING_AREA_ADDR +
 									 manifest->payload_offset);
 
-	/* Bundles place the M-SMC MIS image at TOC index 1 */
-	const struct fw_bundle_toc_entry *m_mis_entry =
-		(toc->image_count > 1) ? &toc->entries[1] : NULL;
-
 	/* Bundles place the K-SMC MIS image at TOC index 0 */
 	const struct fw_bundle_toc_entry *k_mis_entry =
 		(toc->image_count > 0) ? &toc->entries[0] : NULL;
 
-	if (m_mis_entry == NULL || m_mis_entry->type != FW_BUNDLE_IMG_TYPE_SMC_MIS) {
-		LOG_ERR("No SMC MIS image found at TOC index 1");
+	if (k_mis_entry == NULL || k_mis_entry->type != FW_BUNDLE_IMG_TYPE_SMC_MIS) {
+		LOG_ERR("No SMC MIS image found at TOC index 0");
 		return;
 	}
 
-	if (k_mis_entry == NULL || k_mis_entry->type != FW_BUNDLE_IMG_TYPE_SMC_MIS) {
-		LOG_ERR("No SMC MIS image found at TOC index 0");
+#if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(mimir_boot))
+	/* Bundles place the M-SMC MIS image at TOC index 1 */
+	const struct fw_bundle_toc_entry *m_mis_entry =
+		(toc->image_count > 1) ? &toc->entries[1] : NULL;
+
+	if (m_mis_entry == NULL || m_mis_entry->type != FW_BUNDLE_IMG_TYPE_SMC_MIS) {
+		LOG_ERR("No SMC MIS image found at TOC index 1");
 		return;
 	}
 
@@ -88,6 +91,7 @@ void launch_mis(void)
 	if (ret != 0) {
 		LOG_ERR("Failed to launch MIS on Mimir: %d", ret);
 	}
+#endif
 	/* We don't have to copy the image. BUN3 is placed so that we can immediately jump to the
 	 * right location
 	 */
