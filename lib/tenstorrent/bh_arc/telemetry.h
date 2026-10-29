@@ -107,6 +107,15 @@ typedef union {
 /** @brief Low part of the board ID. */
 #define TAG_BOARD_ID_LOW 2
 
+/** @brief Upper 32 bits of the extended board ID as flashed. */
+#define TAG_BOARD_ID_EXT_HIGH 81
+
+/** @brief Middle 32 bits of the extended board ID as flashed. */
+#define TAG_BOARD_ID_EXT_MIDDLE 82
+
+/** @brief Lower 32 bits of the extended board ID as flashed. */
+#define TAG_BOARD_ID_EXT_LOW 83
+
 /** @brief ASIC ID. */
 #define TAG_ASIC_ID 3
 
@@ -502,7 +511,7 @@ typedef union {
 /* Not a real tag, signifies the last tag in the list.
  * MUST be incremented if new tags are defined.
  */
-#define TAG_COUNT 81
+#define TAG_COUNT 84
 
 /* Telemetry tags are at offset `tag` in the telemetry buffer */
 #define TELEM_OFFSET(tag) (tag)
