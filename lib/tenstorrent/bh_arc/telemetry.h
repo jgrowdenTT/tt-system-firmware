@@ -79,8 +79,11 @@ typedef struct {
 	 */
 	uint32_t gddr_therm_trip: 1;
 
+	/** @brief Extended board ID. */
+	uint32_t extended_board_id: 1;
+
 	/** @brief Reserved for future use. */
-	uint32_t reserved: 30;
+	uint32_t reserved: 29;
 } telemetry_feature_flags_bits_0_t;
 
 /** @brief Packed 32-bit representation of @ref telemetry_feature_flags_bits_0_t. */
