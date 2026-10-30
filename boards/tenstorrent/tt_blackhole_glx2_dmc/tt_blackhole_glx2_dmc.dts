@@ -185,21 +185,21 @@
 	pinctrl-names = "default";
 	status = "okay";
 
-	gpiox0: gpio@20 {
+	gpiox0: gpio@27 {
 		compatible = "nxp,pca9555";
 		status = "okay";
 		#gpio-cells = <2>;
 		ngpios = <16>;
-		reg = <0x20>;
+		reg = <0x27>;
 		gpio-controller;
 	};
 
-	gpiox1: gpio@21 {
+	gpiox1: gpio@24 {
 		compatible = "nxp,pca9555";
 		status = "okay";
 		#gpio-cells = <2>;
 		ngpios = <16>;
-		reg = <0x21>;
+		reg = <0x24>;
 		gpio-controller;
 	};
 };
