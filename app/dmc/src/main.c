@@ -313,7 +313,11 @@ uint16_t detect_max_power(void)
 	if (psu_sense0.port == NULL || psu_sense1.port == NULL ||
 	    !device_is_ready(psu_sense0.port) || !device_is_ready(psu_sense1.port)) {
 		/* Boards without PSU sense inputs use the maximum supported limit. */
+#ifdef CONFIG_BOARD_TT_BLACKHOLE_GLX2_DMC
+		return 450;
+#else
 		return 600;
+#endif
 	}
 
 	gpio_pin_configure_dt(&psu_sense0, GPIO_INPUT);
