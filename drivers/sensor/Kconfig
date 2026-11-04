@@ -6,6 +6,7 @@ if SENSOR
 menu "Sensor Drivers"
 
 # zephyr-keep-sorted-start
+rsource "pmbus/Kconfig"
 rsource "maxim/Kconfig"
 rsource "tenstorrent/Kconfig"
 # zephyr-keep-sorted-stop
