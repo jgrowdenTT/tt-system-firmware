@@ -20,7 +20,7 @@ config TT_GRENDEL_I3C_CONTROLLER_INIT_PRIO
 	help
 	  Initialization priority of the Grendel I3C controller driver. Must be
 	  higher than I3C_CONTROLLER_INIT_PRIORITY so the I3C bus is ready, and
-	  lower than TT_MIMIR_REMOTE_BOOT_INIT_PRIO (77) so it is usable from
+	  lower than TT_CHIPLET_REMOTE_BOOT_INIT_PRIO (77) so it is usable from
 	  there.
 
 module = TT_GRENDEL_I3C_CONTROLLER
