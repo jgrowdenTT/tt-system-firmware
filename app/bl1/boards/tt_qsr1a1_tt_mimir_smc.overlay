@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* BL1 starts 128KB from the end of ram0; text+data fit in the first 64KB.
+ * The window stops short of vuart_ram so the console buffer is left alone.
+ */
+&ram0 {
+	reg = <0x0 0xc013b000 0x0 0x1d000>;
+};
+
+/* First stage to run on Mimir, so it puts the persistent vuart into a known state */
+&vuart0 {
+	init-metadata;
+};
+
+&d2d0 {
+	status = "okay";
+};
+
+&d2d1 {
+	status = "okay";
+};
+
+/ {
+	grendel_i3c_target: grendel-i3c-target {
+		compatible = "tenstorrent,grendel-i3c-target";
+		i3c = <&i3c1>;
+		d2d = <&d2d0>, <&d2d1>;
+	};
+};
+
+&{/soc} {
+	/* Mimir SPA view of Keraunos' mbox0: writing even channel x (outbound)
+	 * here triggers Keraunos's RX on its inbound channel x+1. No local
+	 * interrupt line exists for this remote view, so interrupts are
+	 * omitted.
+	 */
+	k_mbox: mbox@1202018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x12 0x02018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+	};
+};

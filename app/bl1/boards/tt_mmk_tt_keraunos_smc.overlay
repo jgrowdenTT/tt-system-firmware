@@ -13,18 +13,33 @@
 };
 
 / {
-	mimir_boot: mimir-remote-boot {
-		compatible = "tenstorrent,mimir-remote-boot";
-		smc-remoteproc = <&remoteproc_m1>;
-		fw-toc-index = <1>;
+	chiplet_boot: chiplet-remote-boot {
+		compatible = "tenstorrent,chiplet-remote-boot";
 		d2d-fw-toc-index = <2>;
 		gddr-params-toc-index = <3>;
+
+		/* BUN2: 1 = Mimir BL1. BUN3: 1 = Mimir MIS. */
+		m-bl1-toc-idx = <1>;
+		m-mis-toc-idx = <1>;
+
+		mimir_m1: mimir-m1 {
+			chiplet-type = "mimir";
+			smc-remoteproc = <&remoteproc_m1>;
+			mis-mbox = <&m1_mbox>;
+			mis-spa-base = <0x13 0x08000000>;
+		};
+
+		mimir_m0: mimir-m0 {
+			chiplet-type = "mimir";
+			smc-remoteproc = <&remoteproc_m0>;
+			mis-mbox = <&m0_mbox>;
+			mis-spa-base = <0x13 0x00000000>;
+		};
 	};
 
 	grendel_i3c_controller_m0: grendel-i3c-controller-m0 {
 		compatible = "tenstorrent,grendel-i3c-controller";
 		i3c-device = <&remoteproc_m0>;
-		status = "disabled";
 	};
 
 	grendel_i3c_controller_m1: grendel-i3c-controller-m1 {
@@ -33,11 +48,21 @@
 	};
 };
 
+&remoteproc_m0 {
+	status = "okay";
+};
+
 &remoteproc_m1 {
 	status = "okay";
 };
 
 &{/soc} {
+	d2d2: d2d@10600000 {
+		compatible = "tenstorrent,grendel-d2d";
+		reg = <0x0 0x10600000 0x0 0x00180158>;
+		status = "okay";
+	};
+
 	host_boot_state: scratch-reg@c0010160 {
 		/* SCRATCH[12] */
 		compatible = "tenstorrent,scratch-reg";

@@ -1,0 +1,150 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* BL1 starts 128KB from the end of ram0; text+data fit in the first 64KB ,
+ * bss/noinit spill into the adjacent memory that BL0P5 occupied (safe to reuse).
+ * The window stops short of vuart_ram so the console buffer is left alone.
+ */
+&ram0 {
+	reg = <0x0 0xc013b000 0x0 0x1d000>;
+};
+
+/ {
+	chiplet_boot: chiplet-remote-boot {
+		compatible = "tenstorrent,chiplet-remote-boot";
+		d2d-fw-toc-index = <2>;
+		gddr-params-toc-index = <3>;
+
+		m-bl1-toc-idx = <1>;
+		m-mis-toc-idx = <1>;
+		q-bl1-toc-idx = <4>;
+		q-mis-toc-idx = <2>;
+
+		mimir_m3: mimir-m3 {
+			chiplet-type = "mimir";
+			smc-remoteproc = <&remoteproc_m3>;
+			mis-mbox = <&m3_mbox>;
+			mis-spa-base = <0x13 0x18000000>;
+		};
+
+		mimir_m2: mimir-m2 {
+			chiplet-type = "mimir";
+			smc-remoteproc = <&remoteproc_m2>;
+			mis-mbox = <&m2_mbox>;
+			mis-spa-base = <0x13 0x10000000>;
+		};
+
+		mimir_m1: mimir-m1 {
+			chiplet-type = "mimir";
+			smc-remoteproc = <&remoteproc_m1>;
+			mis-mbox = <&m1_mbox>;
+			mis-spa-base = <0x13 0x08000000>;
+		};
+
+		mimir_m0: mimir-m0 {
+			chiplet-type = "mimir";
+			smc-remoteproc = <&remoteproc_m0>;
+			mis-mbox = <&m0_mbox>;
+			mis-spa-base = <0x13 0x00000000>;
+		};
+
+		/* PID 0x0a7c0013f004 is in the remoteproc_q0 node name */
+		quasar_q0: quasar-q0 {
+			chiplet-type = "quasar";
+			smc-remoteproc = <&remoteproc_q0>;
+			mis-mbox = <&q0_mbox>;
+			mis-spa-base = <0x19 0xD8000000>;
+		};
+	};
+
+
+	grendel_i3c_controller_m0: grendel-i3c-controller-m0 {
+		compatible = "tenstorrent,grendel-i3c-controller";
+		i3c-device = <&remoteproc_m0>;
+	};
+
+	grendel_i3c_controller_m1: grendel-i3c-controller-m1 {
+		compatible = "tenstorrent,grendel-i3c-controller";
+		i3c-device = <&remoteproc_m1>;
+	};
+};
+
+&remoteproc_m0 {
+	status = "okay";
+};
+
+&remoteproc_m1 {
+	status = "okay";
+};
+
+&remoteproc_m2 {
+	status = "okay";
+};
+
+&remoteproc_m3 {
+	status = "okay";
+};
+
+&remoteproc_q0 {
+	status = "okay";
+};
+
+&{/soc} {
+	d2d2: d2d@10600000 {
+		compatible = "tenstorrent,grendel-d2d";
+		reg = <0x0 0x10600000 0x0 0x00180158>;
+		status = "okay";
+	};
+
+	host_boot_state: scratch-reg@c0010160 {
+		/* SCRATCH[12] */
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc0010160 0x0 0x4>;
+		status = "okay";
+	};
+
+	bundle_validation: scratch-reg@c0010150 {
+		/* SCRATCH[10] */
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc0010150 0x0 0x4>;
+		status = "okay";
+	};
+
+	m0_mbox: mbox@1300018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x13 0x00018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+	};
+
+	m1_mbox: mbox@1308018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x13 0x08018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+	};
+
+	m2_mbox: mbox@1310018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x13 0x10018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+	};
+
+	m3_mbox: mbox@1318018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x13 0x18018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+	};
+
+	q0_mbox: mbox@19d8018000 {
+		compatible = "tenstorrent,grendel-mbox";
+		reg = <0x19 0xd8018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+	};
+};

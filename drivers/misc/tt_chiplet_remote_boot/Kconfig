@@ -1,27 +1,28 @@
 # Copyright (c) 2026 Tenstorrent AI ULC
 # SPDX-License-Identifier: Apache-2.0
 
-config TT_MIMIR_REMOTE_BOOT
-	bool "Tenstorrent Mimir Remote Boot Driver"
+config TT_CHIPLET_REMOTE_BOOT
+	bool "Tenstorrent Chiplet Remote Boot Driver"
 	default y
-	depends on DT_HAS_TENSTORRENT_MIMIR_REMOTE_BOOT_ENABLED
+	depends on DT_HAS_TENSTORRENT_CHIPLET_REMOTE_BOOT_ENABLED
 	depends on TT_SMC_REMOTEPROC
+	select TT_D2D
 	help
-	  Enable the Mimir remote boot driver. Reads the Mimir FW image from
+	  Enable the chiplet remote boot driver. Reads the chiplet FW image from
 	  the BUN2 staging area at the configured TOC index, then OCCP-loads it via
 	  the SMC remoteproc driver
 
-if TT_MIMIR_REMOTE_BOOT
+if TT_CHIPLET_REMOTE_BOOT
 
-config TT_MIMIR_REMOTE_BOOT_INIT_PRIO
+config TT_CHIPLET_REMOTE_BOOT_INIT_PRIO
 	int
 	default 77
 	help
 	  Initialization priority of the Mimir remote boot driver. Must be
 	  higher than TT_SMC_REMOTEPROC_INIT_PRIO (75).
 
-module = TT_MIMIR_REMOTE_BOOT
-module-str = tt_mimir_remote_boot
+module = TT_CHIPLET_REMOTE_BOOT
+module-str = tt_chiplet_remote_boot
 source "subsys/logging/Kconfig.template.log_config"
 
-endif # TT_MIMIR_REMOTE_BOOT
+endif # TT_CHIPLET_REMOTE_BOOT

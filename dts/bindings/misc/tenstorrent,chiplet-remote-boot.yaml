@@ -1,0 +1,110 @@
+# Copyright (c) 2026 Tenstorrent AI ULC
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Tenstorrent chiplet remote boot driver.
+
+  Runs on the host die and boots each remote chiplet described by a child
+  node. Each child names the chiplet type, the remoteproc it is loaded through,
+  the BUN2 TOC entry holding its BL1 image, and the BUN3 TOC entry holding its
+  MIS image. D2D FW and GDDR params images are shared by all remotes, so their
+  TOC indices live on this node.
+
+compatible: "tenstorrent,chiplet-remote-boot"
+
+include: base.yaml
+
+properties:
+  d2d-fw-toc-index:
+    type: int
+    default: 2
+    description: |
+      Index into the BUN2 TOC for the D2D FW image, shared by all remotes.
+      Defaults to 2.
+
+  gddr-params-toc-index:
+    type: int
+    default: 3
+    description: |
+      Index into the BUN2 TOC for the GDDR params image, shared by all remotes.
+      Defaults to 3.
+
+  m-bl1-toc-idx:
+    type: int
+    required: false
+    description: |
+      Default BUN2 TOC index of the BL1 image for every child with
+      chiplet-type "mimir". A child's own bl1-toc-index overrides it.
+
+  m-mis-toc-idx:
+    type: int
+    required: false
+    description: |
+      Default BUN3 TOC index of the MIS image for every child with
+      chiplet-type "mimir". A child's own mis-toc-index overrides it.
+
+  q-bl1-toc-idx:
+    type: int
+    required: false
+    description: |
+      Default BUN2 TOC index of the BL1 image for every child with
+      chiplet-type "quasar". A child's own bl1-toc-index overrides it.
+
+  q-mis-toc-idx:
+    type: int
+    required: false
+    description: |
+      Default BUN3 TOC index of the MIS image for every child with
+      chiplet-type "quasar". A child's own mis-toc-index overrides it.
+
+child-binding:
+  description: |
+    One remote chiplet.
+
+  properties:
+    chiplet-type:
+      type: string
+      required: true
+      enum:
+        - "mimir"
+        - "quasar"
+      description: |
+        Family of this remote chiplet. Selects nothing in the boot sequence
+        yet; it is recorded for logging and for per-family behaviour.
+
+    smc-remoteproc:
+      type: phandle
+      required: true
+      description: |
+        tenstorrent,smc-remoteproc device used to OCCP-load and start this
+        chiplet.
+
+    mis-mbox:
+      type: phandle
+      required: true
+      description: |
+        Mailbox used to prompt this chiplet to jump to its MIS image.
+
+    mis-spa-base:
+      type: array
+      required: true
+      description: |
+        SPA base of this chiplet's core-local address window, as a {hi, lo}
+        32-bit cell pair. The MIS image load address in the bundle is
+        core-local and is added to this base to reach the chiplet.
+
+    bl1-toc-index:
+      type: int
+      required: false
+      description: |
+        Index into the BUN2 TOC for this chiplet's BL1 image. Overrides the
+        parent's default for its chiplet-type (m-bl1-toc-idx or q-bl1-toc-idx).
+        Required unless that default is set.
+
+    mis-toc-index:
+      type: int
+      required: false
+      description: |
+        Index into the BUN3 TOC for this chiplet's MIS image. Overrides the
+        parent's default for its chiplet-type (m-mis-toc-idx or q-mis-toc-idx).
+        Required unless that default is set.
