@@ -12,8 +12,27 @@
 #include <zephyr/irq.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/sys_io.h>
+
+#include <tenstorrent/gr_smc.h>
 
 LOG_MODULE_REGISTER(gr_smc, CONFIG_LOG_DEFAULT_LEVEL);
+
+/* SMC_WRAP reset unit registers; the same addresses on every Grendel chiplet SMC. */
+#define GR_SMC_RESET_UNIT_CHIP_ID_REG_ADDR   0xC0002008
+#define GR_SMC_RESET_UNIT_STRAPS_LO_REG_ADDR 0xC0002090 /* straps from GPIOs 0-31 */
+#define GR_SMC_RESET_UNIT_STRAPS_HI_REG_ADDR 0xC0002094 /* straps from GPIOs 32-63 */
+#define GR_SMC_RESET_UNIT_CHIP_ID_MASK       0x3
+
+/*
+ * CHIP_ID[3:0] strap positions, as in tt_smc_master_chiplet_config_pkg.sv and the SMC ROM:
+ * CHIP_ID_3 = strap 11 and CHIP_ID_2 = strap 12 in STRAPS_LO; CHIP_ID_1 = strap 55 and
+ * CHIP_ID_0 = strap 57, which are bits 23 and 25 of STRAPS_HI.
+ */
+#define GR_SMC_STRAP_CHIP_ID_3_LO_BIT 11
+#define GR_SMC_STRAP_CHIP_ID_2_LO_BIT 12
+#define GR_SMC_STRAP_CHIP_ID_1_HI_BIT 23
+#define GR_SMC_STRAP_CHIP_ID_0_HI_BIT 25
 
 uint64_t read_cycle(void);
 void wait_loop_itr(uint32_t iterations);
@@ -41,6 +60,24 @@ void wait_loop_itr(uint32_t iterations)
 	for (volatile uint32_t i = 0; i < iterations; i++) {
 		__asm__ volatile("" ::: "memory");
 	}
+}
+
+struct gr_smc_chipid gr_smc_get_chipid(void)
+{
+	uint32_t chip_id = sys_read32(GR_SMC_RESET_UNIT_CHIP_ID_REG_ADDR);
+	uint32_t straps_lo = sys_read32(GR_SMC_RESET_UNIT_STRAPS_LO_REG_ADDR);
+	uint32_t straps_hi = sys_read32(GR_SMC_RESET_UNIT_STRAPS_HI_REG_ADDR);
+	uint8_t instance = 0;
+
+	instance |= ((straps_lo >> GR_SMC_STRAP_CHIP_ID_3_LO_BIT) & 1) << 3;
+	instance |= ((straps_lo >> GR_SMC_STRAP_CHIP_ID_2_LO_BIT) & 1) << 2;
+	instance |= ((straps_hi >> GR_SMC_STRAP_CHIP_ID_1_HI_BIT) & 1) << 1;
+	instance |= (straps_hi >> GR_SMC_STRAP_CHIP_ID_0_HI_BIT) & 1;
+
+	return (struct gr_smc_chipid){
+		.type = (enum gr_smc_chip_type)(chip_id & GR_SMC_RESET_UNIT_CHIP_ID_MASK),
+		.instance = instance,
+	};
 }
 
 FUNC_NORETURN void gr_smc_jump_to(uintptr_t entry_point)
