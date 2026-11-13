@@ -8,7 +8,7 @@
  * Train D2D links. MM: M0.D2D1 <-> M1.D2D0. MMK adds M1.D2D1 <-> K0.D2D2.
  *
  * Both Mimirs share one image and one overlay; the die is identified from
- * scratch[15]. The host releases every Rocket together after each die writes
+ * the reset unit chip id. The host releases every Rocket together after each die writes
  * TS_D2D_WAIT_TRAINING -- neither end starts itself.
  */
 
@@ -30,7 +30,11 @@
 #include "chip_init.h"
 #include "d2d_fw_blob.h"
 
-/* Chip id in scratch[15]; Keraunos is 0, distinguished by which image is running. */
+/*
+ * Chip id from the SMC reset unit, so no host has to publish it. Keraunos is 0,
+ * distinguished by which image is running.
+ */
+#define RESET_UNIT_CHIP_ID_REG 0xC0002008U
 #define CHIP_ID_MASK      0xFFU
 #define CHIP_ID_MIMIR0    0x03U
 #define CHIP_ID_MIMIR1    0x13U
@@ -156,7 +160,7 @@ static int wait_for_release(void)
 
 static void *train_setup(void)
 {
-	chip_id = READ_SCRATCH(15) & CHIP_ID_MASK;
+	chip_id = sys_read32(RESET_UNIT_CHIP_ID_REG) & CHIP_ID_MASK;
 	WRITE_SCRATCH(5, chip_id);
 
 	STEP(1);
@@ -167,7 +171,7 @@ static void *train_setup(void)
 
 	STEP(2);
 	link_tiles = link_tiles_for(chip_id, &link_count);
-	zassert_not_null(link_tiles, "scratch[15] 0x%02x is not a die this image knows", chip_id);
+	zassert_not_null(link_tiles, "reset unit chip id 0x%02x is not a die this image knows", chip_id);
 
 	STEP(3);
 	zassert_ok(tt_d2d_test_chip_init(), "chip init failed");
