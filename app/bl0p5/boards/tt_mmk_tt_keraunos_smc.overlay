@@ -4,33 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* BL0P5 starts 64KB from the end of ram0, 32KB available before vuart_ram */
-&ram0 {
-	reg = <0x0 0xc0150000 0x0 0x8000>;
-};
-
-/* First stage to run on Keraunos, so it puts the persistent vuart into a known state */
-&vuart0 {
-	init-metadata;
-};
-
-/* Not used by BUN2/BL0P5; disables the I3C bus the remoteproc driver depends on */
-&i3c1 {
-	status = "disabled";
-};
-
-&{/soc} {
-	host_boot_state: scratch-reg@c0010160 {
-		/* SCRATCH[12] */
-		compatible = "tenstorrent,scratch-reg";
-		reg = <0x0 0xc0010160 0x0 0x4>;
-		status = "okay";
-	};
-
-	bundle_validation: scratch-reg@c0010150 {
-		/* SCRATCH[10] */
-		compatible = "tenstorrent,scratch-reg";
-		reg = <0x0 0xc0010150 0x0 0x4>;
-		status = "okay";
-	};
-};
+#include <tenstorrent/tt_grendel_bl0p5.dtsi>
