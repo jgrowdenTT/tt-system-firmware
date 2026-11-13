@@ -14,7 +14,6 @@ tt_sival_sdk_extract(${CMAKE_CURRENT_SOURCE_DIR}/../../../zephyr/blobs/grendel-s
 set(SIVAL_SDK ${SIVAL_EXTDIR}/grendel_sival_sdk)
 
 set(SIVAL_SDK_SOURCES
-  ${SIVAL_SDK}/firmware/drivers/addr_remap/src/remapper.c
   ${SIVAL_SDK}/firmware/drivers/firewall/src/firewall.c
   ${SIVAL_SDK}/firmware/drivers/noc/src/itn.c
   ${SIVAL_SDK}/firmware/drivers/smc/src/smc_init.c
@@ -25,9 +24,16 @@ set(SIVAL_SDK_SOURCES
 
 zephyr_library_sources(${SIVAL_SDK_SOURCES})
 
+set(SIVAL_NO_WERROR_SOURCES ${SIVAL_SDK_SOURCES})
+
+if (CONFIG_SOC_TT_KERAUNOS_SMC OR CONFIG_SOC_TT_MIMIR_SMC)
+zephyr_library_sources(${SIVAL_SDK}/firmware/drivers/addr_remap/src/remapper.c)
 # remapper.c switches over an enum without handling the terminating member,
 # which is flagged by -Werror=switch
-set_source_files_properties(${SIVAL_SDK_SOURCES}
+list(APPEND SIVAL_NO_WERROR_SOURCES ${SIVAL_SDK}/firmware/drivers/addr_remap/src/remapper.c)
+endif()
+
+set_source_files_properties(${SIVAL_NO_WERROR_SOURCES}
   PROPERTIES COMPILE_OPTIONS "-Wno-error")
 
 zephyr_library_include_directories(
@@ -38,5 +44,15 @@ zephyr_library_include_directories(
   ${SIVAL_SDK}/firmware/libs/hsio_tile/include
   ${SIVAL_SDK}/firmware/drivers/firewall/include
   ${SIVAL_SDK}/firmware/drivers/smc/include)
+
+# clock.c also pulls in the Quasar NOC/SMN headers, which only exist for the
+# Quasar SoC.
+if(CONFIG_SOC_TT_QUASAR_SMC)
+zephyr_library_include_directories(
+  ${SIVAL_SDK}/firmware/drivers/quasar_noc/include
+  ${SIVAL_SDK}/firmware/libs/quasar_noc_api/include
+  ${SIVAL_SDK}/firmware/drivers/quasar_smn/include
+  ${SIVAL_SDK}/firmware/libs/quasar_smn_api/include)
+endif()
 
 zephyr_library_sources_ifdef(CONFIG_TT_GR_SMC_ERR_STR ${SIVAL_SDK}/firmware/common/src/err.c)
