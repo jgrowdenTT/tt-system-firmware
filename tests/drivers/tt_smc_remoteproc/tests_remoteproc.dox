@@ -1,0 +1,13 @@
+/**
+
+@brief Remote SMC remoteproc tests
+@defgroup tests_remoteproc Remote SMC remoteproc
+@ingroup all_tests
+@details
+Loading and booting firmware on a remote SMC chiplet from the primary BL1, using the
+remoteproc driver over I3C. The area exercises the OCCP subsystem and the I3C driver as
+part of that path.
+@{
+@}
+
+*/

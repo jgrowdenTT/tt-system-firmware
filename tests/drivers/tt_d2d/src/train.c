@@ -199,6 +199,12 @@ static void *train_setup(void)
 	return NULL;
 }
 
+/**
+ * @brief The D2D links train after the firmware is loaded and released.
+ * @details Loads the firmware into each die-facing tile, releases the cores, and waits
+ * for each link to train. Skipped when the image is the generated stand-in.
+ * @ingroup tests_d2d_train
+ */
 ZTEST(tt_d2d_train, test_link_trains)
 {
 	const uint8_t *img;

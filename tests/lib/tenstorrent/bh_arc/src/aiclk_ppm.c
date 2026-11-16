@@ -65,6 +65,11 @@ static void reinit_arb(void *fixture)
 	set_busy(false);
 }
 
+/**
+ * @brief With no arbiter enabled, the AICLK target is Fmin.
+ * @details Recalculates the target with every arbiter disabled and checks it equals fmin.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_no_arb_enabled)
 {
 	uint32_t targ_freq;
@@ -78,6 +83,12 @@ ZTEST(aiclk_ppm, test_no_arb_enabled)
 		targ_freq, fmin);
 }
 
+/**
+ * @brief The fmin arbiter raises the target only while enabled.
+ * @details Sets the min arbiter to fmin plus 100. Checks the target stays at fmin while disabled
+ * and reaches the raised value once enabled.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_min_disable_enable)
 {
 	uint32_t mod_fmin = fmin + 100;
@@ -108,6 +119,12 @@ ZTEST(aiclk_ppm, test_arb_min_disable_enable)
 		      targ_freq, mod_fmin);
 }
 
+/**
+ * @brief The fmax arbiter caps the target only while enabled.
+ * @details Sets busy to hold the target at fmax and sets a max arbiter to the midpoint. Checks the
+ * target is fmin while both are disabled, and the midpoint once enabled.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_max_disable_enable)
 {
 	uint32_t mod_fmax = (fmin + fmax) / 2;
@@ -142,6 +159,12 @@ ZTEST(aiclk_ppm, test_arb_max_disable_enable)
 		      targ_freq, mod_fmax);
 }
 
+/**
+ * @brief Arbiter requests outside the fmin to fmax range are clamped.
+ * @details Sets a min arbiter above fmax and a max arbiter below fmin. Checks the target stays
+ * within the fmin to fmax range in each case.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_freq_clamping)
 {
 	uint32_t targ_freq;
@@ -171,6 +194,12 @@ ZTEST(aiclk_ppm, test_arb_freq_clamping)
 		     fmax);
 }
 
+/**
+ * @brief The lowest enabled max arbiter sets the target ceiling.
+ * @details Enables three max arbiters with busy min on. Checks the TDP arbiter, at fmax minus 200,
+ * is effective and the target equals it.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_lowest_max)
 {
 	uint32_t targ_freq;
@@ -205,6 +234,12 @@ ZTEST(aiclk_ppm, test_arb_lowest_max)
 		      expected_max);
 }
 
+/**
+ * @brief The lowest max arbiter is honoured when its value is fractional.
+ * @details Repeats the lowest-max case with the TDP limit at fmax minus 200.1. Checks the
+ * effective max and target truncate to an integer.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_lowest_max_fractional)
 {
 	uint32_t targ_freq;
@@ -239,6 +274,12 @@ ZTEST(aiclk_ppm, test_arb_lowest_max_fractional)
 		      expected_max);
 }
 
+/**
+ * @brief The highest enabled min arbiter sets the target floor.
+ * @details Enables min arbiters at fmin plus 100 and fmin plus 200. Checks the busy arbiter is
+ * effective and the target equals fmin plus 200.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_highest_min)
 {
 	uint32_t targ_freq;
@@ -265,6 +306,12 @@ ZTEST(aiclk_ppm, test_arb_highest_min)
 		      targ_freq, expected_min);
 }
 
+/**
+ * @brief The highest min arbiter is honoured when its value is fractional.
+ * @details Repeats the highest-min case with the busy limit at fmin plus 200.1. Checks the
+ * effective min and target truncate to an integer.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_highest_min_fractional)
 {
 	uint32_t targ_freq;
@@ -290,6 +337,11 @@ ZTEST(aiclk_ppm, test_arb_highest_min_fractional)
 		      "Target frequency (%d) should be equal to highest min arbiter (%d)",
 		      targ_freq, expected_min);
 }
+/**
+ * @brief A max arbiter below fmin leaves the target at fmin.
+ * @details Enables a max arbiter set to fmin minus 100 and checks the target equals fmin.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_max_arb_less_than_fmin)
 {
 	uint32_t targ_freq;
@@ -307,6 +359,12 @@ ZTEST(aiclk_ppm, test_max_arb_less_than_fmin)
 		targ_freq, fmin);
 }
 
+/**
+ * @brief When the min arbiter exceeds the max arbiter, the target is the max.
+ * @details Sets a min arbiter at fmax minus 100 and a max arbiter at fmin plus 100. Checks the
+ * target equals the max arbiter value.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_min_arb_greater_than_max_arb)
 {
 	uint32_t targ_freq;
@@ -329,6 +387,12 @@ ZTEST(aiclk_ppm, test_min_arb_greater_than_max_arb)
 		      targ_freq, fmin);
 }
 
+/**
+ * @brief The enabled min arbiter bitmask follows each enable and disable.
+ * @details Toggles min arbiters and checks the bitmask after each change. Checks all bits are set
+ * once every arbiter is enabled.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_enabled_arb_min_bitmask)
 {
 	uint32_t bitmask;
@@ -371,6 +435,12 @@ ZTEST(aiclk_ppm, test_enabled_arb_min_bitmask)
 		bitmask, aiclk_arb_min_count, expected_all);
 }
 
+/**
+ * @brief The enabled max arbiter bitmask follows each enable and disable.
+ * @details Toggles max arbiters and checks the bitmask after each change. Checks all bits are set
+ * once every arbiter is enabled.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_enabled_arb_max_bitmask)
 {
 	uint32_t bitmask;
@@ -418,6 +488,12 @@ ZTEST(aiclk_ppm, test_enabled_arb_max_bitmask)
 		bitmask, aiclk_arb_max_count, expected_all);
 }
 
+/**
+ * @brief The min and max arbiter bitmasks do not affect each other.
+ * @details Enables one min arbiter and two max arbiters. Checks each bitmask reflects only its own
+ * arbiters.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_arb_bitmask_independent)
 {
 	uint32_t min_bitmask, max_bitmask;
@@ -452,6 +528,12 @@ static void send_set_host_fmax(uint32_t freq, uint8_t restore_default, uint8_t *
 	}
 }
 
+/**
+ * @brief A valid host fmax request is accepted and becomes the effective max.
+ * @details Sends 1000 MHz and checks the status is success. Checks the host fmax arbiter is the
+ * effective max at that frequency.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_set_host_fmax_valid)
 {
 	uint8_t status;
@@ -470,6 +552,12 @@ ZTEST(aiclk_ppm, test_set_host_fmax_valid)
 		      "Effective arbiter should be aiclk_arb_max_host_fmax");
 }
 
+/**
+ * @brief Restore-default disables the host fmax arbiter.
+ * @details Sets a host fmax of 1000 MHz, then sends restore-default. Checks success and that the
+ * host fmax arbiter bit is cleared.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_set_host_fmax_restore_default)
 {
 	uint8_t status;
@@ -489,6 +577,11 @@ ZTEST(aiclk_ppm, test_set_host_fmax_restore_default)
 		      "host fmax arbiter should be disabled after restore_default");
 }
 
+/**
+ * @brief A host fmax above the allowed range is rejected.
+ * @details Sends 9999 MHz and checks the status is an error.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_set_host_fmax_out_of_range_high)
 {
 	uint8_t status;
@@ -497,6 +590,11 @@ ZTEST(aiclk_ppm, test_set_host_fmax_out_of_range_high)
 	zassert_not_equal(status, 0, "Expected error for out-of-range fmax (too high)");
 }
 
+/**
+ * @brief A host fmax below the allowed range is rejected.
+ * @details Sends 100 MHz and checks the status is an error.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_set_host_fmax_out_of_range_low)
 {
 	uint8_t status;
@@ -505,6 +603,11 @@ ZTEST(aiclk_ppm, test_set_host_fmax_out_of_range_low)
 	zassert_not_equal(status, 0, "Expected error for out-of-range fmax (too low)");
 }
 
+/**
+ * @brief FORCE_AICLK accepts a forced frequency and a release.
+ * @details Forces 1000 MHz, then sends a zero release. Checks both replies are success.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_msg_type_force_aiclk)
 {
 	union request req = {0};
@@ -533,6 +636,11 @@ ZTEST(aiclk_ppm, test_msg_type_force_aiclk)
 	zassert_equal(rsp.data[0], 0);
 }
 
+/**
+ * @brief GET_AICLK returns a valid clock mode.
+ * @details Sends GET_AICLK and checks the reply is success with clock mode 1, 2 or 3.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_msg_type_get_aiclk)
 {
 	union request req = {0};
@@ -550,6 +658,11 @@ ZTEST(aiclk_ppm, test_msg_type_get_aiclk)
 		     rsp.data[2]);
 }
 
+/**
+ * @brief AISWEEP_START and AISWEEP_STOP both succeed.
+ * @details Starts a sweep from fmin to fmax, then stops it. Checks both replies are success.
+ * @ingroup tests_bh_arc_aiclk
+ */
 ZTEST(aiclk_ppm, test_msg_type_aisweep_start_stop)
 {
 	union request req = {0};

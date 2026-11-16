@@ -126,6 +126,12 @@ static const uint32_t four_bytes = 0x42427373;
  */
 static const uint64_t eight_bytes = 0x2424373742427373;
 
+/**
+ * @brief Checks the boot filesystem checksum against known values.
+ * @details Computes tt_boot_fs_cksum() over empty, four-byte and eight-byte inputs and asserts the
+ * expected results.
+ * @ingroup tests_boot_fs
+ */
 ZTEST(tt_boot_fs, test_tt_boot_fs_cksum)
 {
 	uint32_t cksum;
@@ -164,6 +170,13 @@ ZTEST(tt_boot_fs, test_tt_boot_fs_cksum)
 		.dev = d, .fds = f, .nfds = n, .offset = o, .expect = e                            \
 	}
 
+/**
+ * @brief Checks argument handling and descriptor counting of tt_boot_fs_ls().
+ * @details Calls tt_boot_fs_ls() with a NULL device, NULL or zero-sized arrays, and various counts
+ * and offsets. Asserts -ENXIO for a NULL device and the expected number of valid descriptors
+ * otherwise.
+ * @ingroup tests_boot_fs
+ */
 ZTEST(tt_boot_fs, test_boot_fs_ls)
 {
 	static tt_boot_fs_fd fds[MAX_FDS];
@@ -214,6 +227,12 @@ ZTEST(tt_boot_fs, test_boot_fs_ls)
 		.dev = (d), .tag = (t), .fd_out = (f), .expect = (e)                               \
 	}
 
+/**
+ * @brief Checks lookup of image descriptors by tag.
+ * @details Calls tt_boot_fs_find_fd_by_tag() with existing and missing tags and with invalid
+ * arguments. Asserts the returned codes and that the returned tag matches the request.
+ * @ingroup tests_boot_fs
+ */
 ZTEST(tt_boot_fs, test_find_fd_by_tag)
 {
 	tt_boot_fs_fd result_fd;

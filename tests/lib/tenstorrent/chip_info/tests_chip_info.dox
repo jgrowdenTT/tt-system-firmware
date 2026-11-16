@@ -1,0 +1,12 @@
+/**
+
+@brief Chip info tests
+@defgroup tests_chip_info Chip info
+@ingroup all_tests
+@details
+Chip information reported by the recovery firmware. The tests cover vendor identity, feature flags
+and PCIe properties of the static backend that runs without SPI firmware tables.
+@{
+@}
+
+*/

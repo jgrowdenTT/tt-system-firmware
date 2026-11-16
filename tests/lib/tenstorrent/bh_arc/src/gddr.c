@@ -53,6 +53,12 @@ void write_reg_fake_count_mrisc_msgs(uint32_t addr, uint32_t value)
 	}
 }
 
+/**
+ * @brief Power setting fails with EBUSY when the MRISC register is busy.
+ * @details Makes the message register read as busy and checks set_mrisc_power_setting(true)
+ * returns -EBUSY.
+ * @ingroup tests_bh_arc_gddr
+ */
 ZTEST(gddr, test_mrisc_busy_failed)
 {
 	ReadReg_fake.custom_fake = read_reg_fake_mrisc_busy;
@@ -61,6 +67,12 @@ ZTEST(gddr, test_mrisc_busy_failed)
 	zassert_equal(ret, -EBUSY);
 }
 
+/**
+ * @brief Power setting fails with ETIMEDOUT when MRISC never responds.
+ * @details Keeps the message register busy past the timeout and checks
+ * set_mrisc_power_setting(true) returns -ETIMEDOUT.
+ * @ingroup tests_bh_arc_gddr
+ */
 ZTEST(gddr, test_mrisc_timed_out)
 {
 	ReadReg_fake.custom_fake = read_reg_fake_mrisc_timed_out;
@@ -69,6 +81,11 @@ ZTEST(gddr, test_mrisc_timed_out)
 	zassert_equal(ret, -ETIMEDOUT);
 }
 
+/**
+ * @brief Powering on sends a PHY wakeup message to every GDDR.
+ * @details Checks set_mrisc_power_setting(true) succeeds and writes one wakeup message per GDDR.
+ * @ingroup tests_bh_arc_gddr
+ */
 ZTEST(gddr, test_mrisc_power_on)
 {
 	WriteReg_fake.custom_fake = write_reg_fake_count_mrisc_msgs;
@@ -83,6 +100,12 @@ ZTEST(gddr, test_mrisc_power_on)
 	num_mrisc_msgs = 0U;
 }
 
+/**
+ * @brief Powering off sends a PHY powerdown message to every GDDR.
+ * @details Checks set_mrisc_power_setting(false) succeeds and writes one powerdown message per
+ * GDDR.
+ * @ingroup tests_bh_arc_gddr
+ */
 ZTEST(gddr, test_mrisc_power_off)
 {
 	WriteReg_fake.custom_fake = write_reg_fake_count_mrisc_msgs;

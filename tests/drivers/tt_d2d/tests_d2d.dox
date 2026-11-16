@@ -1,0 +1,40 @@
+/**
+
+@brief Die-to-die (D2D) tests
+@defgroup tests_d2d D2D
+@ingroup all_tests
+@details
+Die-to-die links between chips in a package. The tests cover loading the link firmware
+into each D2D tile, and bringing the links up between dies. The load tests run on one
+tile at a time. The training test brings up every link that faces another die.
+@{
+@}
+
+*/
+
+/**
+
+@brief D2D firmware load tests
+@defgroup tests_d2d_load D2D firmware load
+@ingroup tests_d2d
+@details
+Loading the D2D link firmware into a tile's SRAM. The tests check the copied bytes, the
+configuration block the loader writes, and that the core stays halted until it is
+started, then runs the firmware.
+@{
+@}
+
+*/
+
+/**
+
+@brief D2D link training tests
+@defgroup tests_d2d_train D2D link training
+@ingroup tests_d2d
+@details
+Bringing up the links between dies. The test loads the firmware into every tile that
+faces another die, releases the cores, and waits for each link to train.
+@{
+@}
+
+*/

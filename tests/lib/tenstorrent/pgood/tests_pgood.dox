@@ -1,0 +1,12 @@
+/**
+
+@brief Power good tests
+@defgroup tests_pgood Power good
+@ingroup all_tests
+@details
+Power-good monitoring for the chip. The tests cover detection of PGOOD falls and rises and the
+handling of repeated faults.
+@{
+@}
+
+*/

@@ -33,6 +33,12 @@ static int flash_program_wrap(const struct device *dev, off_t offset, const void
 	return flash_write(dev, offset, data, len);
 }
 
+/**
+ * @brief The flash area is read within the expected time.
+ * @details Averages ten reads of the whole test area and checks the average is under
+ * CONFIG_EXPECTED_READ_TIME ms.
+ * @ingroup tests_flash_perf
+ */
 ZTEST(flash_driver_perf, test_read_perf)
 {
 	int rc;
@@ -50,6 +56,12 @@ ZTEST(flash_driver_perf, test_read_perf)
 	zassert_true(delta < CONFIG_EXPECTED_READ_TIME, "Read performance test failed");
 }
 
+/**
+ * @brief The flash area is programmed within the expected time, and reads back correctly.
+ * @details Erases and writes the test area ten times, reads it back and compares it each
+ * time, and checks the average is under CONFIG_EXPECTED_PROGRAM_TIME ms.
+ * @ingroup tests_flash_perf
+ */
 ZTEST(flash_driver_perf, test_program_perf)
 {
 	int rc;

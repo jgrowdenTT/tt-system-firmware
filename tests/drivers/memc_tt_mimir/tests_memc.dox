@@ -1,0 +1,11 @@
+/**
+
+@brief Memory controller
+@defgroup tests_memc Memory controller
+@ingroup all_tests
+@details
+The GDDR memory controller driver. Its bring-up runs as the controller initialises, and the test checks that the bring-up completed.
+@{
+@}
+
+*/

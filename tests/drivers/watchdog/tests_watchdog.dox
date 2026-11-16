@@ -1,0 +1,11 @@
+/**
+
+@brief Watchdog
+@defgroup tests_watchdog Watchdog
+@ingroup all_tests
+@details
+The watchdog timer driver. The test arms a timeout and checks that its callback fires.
+@{
+@}
+
+*/

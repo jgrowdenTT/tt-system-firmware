@@ -116,6 +116,12 @@ static void *bh_arc_telem_setup(void)
 	return NULL;
 }
 
+/**
+ * @brief A die temperature is read within tolerance.
+ * @details Sets a simulated temperature of 25.5 C and checks the decoded reading is within
+ * 300 mK.
+ * @ingroup tests_bh_arc_telem
+ */
 ZTEST(bh_arc_telem, test_temperature_read)
 {
 	struct sensor_value value;
@@ -130,6 +136,11 @@ ZTEST(bh_arc_telem, test_temperature_read)
 	zassert_within(sensor_value_to_micro(&value), 25500000LL, TELEM_TOLERANCE_MICRO);
 }
 
+/**
+ * @brief A negative die temperature is read within tolerance.
+ * @details Sets -5.25 C and checks the decoded reading is within 300 mK.
+ * @ingroup tests_bh_arc_telem
+ */
 ZTEST(bh_arc_telem, test_temperature_negative_read)
 {
 	struct sensor_value value;
@@ -142,6 +153,12 @@ ZTEST(bh_arc_telem, test_temperature_negative_read)
 	zassert_within(sensor_value_to_micro(&value), -5250000LL, TELEM_TOLERANCE_MICRO);
 }
 
+/**
+ * @brief Each new temperature update is the value read back.
+ * @details Alternates between 30.0 C and 31.5 C over 50 iterations, reading after each
+ * update.
+ * @ingroup tests_bh_arc_telem
+ */
 ZTEST(bh_arc_telem, test_temperature_reflects_latest_update)
 {
 	struct sensor_value value;
@@ -163,6 +180,11 @@ ZTEST(bh_arc_telem, test_temperature_reflects_latest_update)
 	}
 }
 
+/**
+ * @brief Decoding a temperature frame as power returns -ENODATA.
+ * @details Reads a die-temperature frame while asking for the power channel.
+ * @ingroup tests_bh_arc_telem
+ */
 ZTEST(bh_arc_telem, test_decode_channel_mismatch_returns_enodata)
 {
 	struct sensor_value value;
@@ -174,6 +196,11 @@ ZTEST(bh_arc_telem, test_decode_channel_mismatch_returns_enodata)
 	zassert_equal(rc, -ENODATA, "expected -ENODATA, got %d", rc);
 }
 
+/**
+ * @brief A channel index that does not match the frame returns -ENODATA.
+ * @details Reads a power frame while asking for channel index 1.
+ * @ingroup tests_bh_arc_telem
+ */
 ZTEST(bh_arc_telem, test_decode_channel_index_mismatch_returns_enodata)
 {
 	struct sensor_value value;
@@ -183,6 +210,12 @@ ZTEST(bh_arc_telem, test_decode_channel_index_mismatch_returns_enodata)
 	zassert_equal(rc, -ENODATA, "expected -ENODATA, got %d", rc);
 }
 
+/**
+ * @brief One read holding two channels decodes each channel in turn.
+ * @details Reads a frame with both a temperature and a power channel, and checks each
+ * decodes to one frame.
+ * @ingroup tests_bh_arc_telem
+ */
 ZTEST(bh_arc_telem, test_decode_multi_channel_progresses_fit)
 {
 	const struct sensor_decoder_api *decoder;

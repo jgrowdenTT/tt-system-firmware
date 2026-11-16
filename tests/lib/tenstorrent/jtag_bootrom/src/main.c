@@ -18,6 +18,12 @@ static struct bh_chip test_chip = {.config = {
 					   .pgood = GPIO_DT_SPEC_GET(DT_PATH(pgood), gpios),
 				   }};
 
+/**
+ * @brief Checks that the boot ROM patch loads and verifies over JTAG.
+ * @details Initializes the chip, resets the ASIC, writes the boot code patch at offset 0 and
+ * verifies it. Asserts that every step succeeds.
+ * @ingroup tests_jtag_bootrom
+ */
 ZTEST(jtag_bootrom, test_jtag_bootrom)
 {
 	const uint32_t *const patch = (const uint32_t *)get_bootcode();

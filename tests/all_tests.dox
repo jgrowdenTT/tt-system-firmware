@@ -1,0 +1,37 @@
+/**
+
+@brief Tests
+@defgroup all_tests Tests
+@details
+A test is code that checks a piece of software behaves as specified. Each test case
+makes a claim about one behaviour (a return value, a state change, a rejected input)
+and fails if the claim does not hold. Tests catch regressions and document the
+expected behaviour of the code they cover.
+
+In Zephyr, tests are built on the Ztest framework. A test file defines one or more
+suites with ZTEST_SUITE(), and each test case is written with the
+<a href="https://docs.zephyrproject.org/latest/doxygen/html/group__ztest__test.html#gac25858f76ea667d07de422a3b489cb15">ZTEST()</a>
+macro, which uses assertions such as zassert_equal() to check its results.
+Optional setup and teardown functions run before and after the cases in a suite.
+
+Each test directory is a small Zephyr application. A testcase.yaml declares the test
+identifiers, their tags, and the platforms they may run on. Twister, Zephyr's test runner, walks the
+test roots, reads these files, builds each selected test for its platform, and runs it.
+
+Test areas are grouped by subsystem, and each area below has its own page. The platform
+list on each page is the set twister selects for that area's testcase.yaml files, so it
+follows the configuration rather than being written by hand.
+
+Upstream documentation:
+
+- [Testing overview](https://docs.zephyrproject.org/latest/develop/test/index.html)
+- [Twister test runner](https://docs.zephyrproject.org/latest/develop/test/twister.html)
+- [Test configuration in Twister](https://docs.zephyrproject.org/latest/develop/test/twister.html#twister_tests_long_version)
+- [Harnesses](https://docs.zephyrproject.org/latest/develop/test/twister.html#twister_harnesses)
+- [Ztest test framework](https://docs.zephyrproject.org/latest/develop/test/ztest.html#test-framework)
+- [Ztest unit testing quick start](https://docs.zephyrproject.org/latest/develop/test/ztest.html#ztest_unit_testing)
+
+@{
+@}
+
+*/

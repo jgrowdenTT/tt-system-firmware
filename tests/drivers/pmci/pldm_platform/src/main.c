@@ -51,6 +51,11 @@ static void assert_response_header(const struct pldm_msg *resp_msg, uint8_t inst
 	zassert_equal(hdr.command, command);
 }
 
+/**
+ * @brief Verify the platform versions query returns entries.
+ * @details Checks the platform versions list is non-null and holds a whole number of version entries, at least one.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_versions_get_has_entries)
 {
 	size_t versions_size = 0U;
@@ -61,6 +66,11 @@ ZTEST(pldm_platform, test_versions_get_has_entries)
 	zassert_equal(versions_size % sizeof(ver32_t), 0U);
 }
 
+/**
+ * @brief Verify the platform commands query lists the supported commands.
+ * @details Checks GetSensorReading, GetPDRRepositoryInfo and GetPDR are set in the platform command bitmap.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_commands_get_contains_supported_commands)
 {
 	const bitfield8_t *commands = pldm_platform_commands_get();
@@ -73,6 +83,11 @@ ZTEST(pldm_platform, test_commands_get_contains_supported_commands)
 	zassert_true((commands[PLDM_GET_PDR / 8].byte & BIT(PLDM_GET_PDR % 8)) != 0U);
 }
 
+/**
+ * @brief Verify platform PDR repository info is returned on success.
+ * @details Builds a GetPDRRepositoryInfo response and checks it succeeds with a non-empty payload.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_pdr_repository_info_success)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);
@@ -95,6 +110,11 @@ ZTEST(pldm_platform, test_get_pdr_repository_info_success)
 	zassert_equal(resp_msg->payload[0], PLDM_SUCCESS);
 }
 
+/**
+ * @brief Verify platform PDR repository info rejects an invalid length.
+ * @details Builds a GetPDRRepositoryInfo response for a request with a one-byte payload and checks it returns INVALID_LENGTH.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_pdr_repository_info_rejects_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);
@@ -117,6 +137,11 @@ ZTEST(pldm_platform, test_get_pdr_repository_info_rejects_invalid_length)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify platform GetPDR returns a record on success.
+ * @details Builds a GetPDR response for record 0 in 8-byte chunks and checks success, a START or START_AND_END flag, at most 8 bytes returned, and the expected next-part handles.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_pdr_success)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -164,6 +189,11 @@ ZTEST(pldm_platform, test_get_pdr_success)
 	(void)transfer_crc;
 }
 
+/**
+ * @brief Verify platform sensor reading rejects an invalid sensor ID.
+ * @details Requests sensor 999 and checks the response is INVALID_SENSOR_ID.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_sensor_reading_invalid_sensor_id)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -188,6 +218,11 @@ ZTEST(pldm_platform, test_get_sensor_reading_invalid_sensor_id)
 	zassert_equal(resp_msg->payload[0], PLDM_PLATFORM_INVALID_SENSOR_ID);
 }
 
+/**
+ * @brief Verify platform sensor reading rejects an invalid length.
+ * @details Sends GetSensorReading with a zero-length payload and checks the response is INVALID_LENGTH.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_sensor_reading_rejects_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -210,6 +245,11 @@ ZTEST(pldm_platform, test_get_sensor_reading_rejects_invalid_length)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify a rearm request is reported as unavailable.
+ * @details Sends GetSensorReading with rearm set and checks the response is REARM_UNAVAILABLE_IN_PRESENT_STATE.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_sensor_reading_rearm_unavailable)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -234,6 +274,11 @@ ZTEST(pldm_platform, test_get_sensor_reading_rearm_unavailable)
 	zassert_equal(resp_msg->payload[0], PLDM_PLATFORM_REARM_UNAVAILABLE_IN_PRESENT_STATE);
 }
 
+/**
+ * @brief Verify a reading for an unavailable sensor is reported as unavailable.
+ * @details Requests sensor 404 and checks the response is SENSOR_UNAVAILABLE.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_sensor_reading_sensor_unavailable)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -258,6 +303,11 @@ ZTEST(pldm_platform, test_get_sensor_reading_sensor_unavailable)
 	zassert_equal(resp_msg->payload[0], PLDM_SENSOR_UNAVAILABLE);
 }
 
+/**
+ * @brief Verify a sensor reading decode failure returns an error.
+ * @details Requests sensor 505 and checks the response is the generic PLDM_ERROR completion code.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_sensor_reading_decode_failure_returns_error)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -282,6 +332,11 @@ ZTEST(pldm_platform, test_get_sensor_reading_decode_failure_returns_error)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR);
 }
 
+/**
+ * @brief Verify platform sensor reading returns a value on success.
+ * @details Reads sensor 101 and checks the response decodes to SINT32 data, enabled operational state, events disabled and normal present state.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_get_sensor_reading_success)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -326,6 +381,11 @@ ZTEST(pldm_platform, test_get_sensor_reading_success)
 	ARG_UNUSED(event_state);
 }
 
+/**
+ * @brief Verify an unsupported platform command returns an error.
+ * @details Builds a response for undefined platform command 0xFF and checks it returns UNSUPPORTED_PLDM_CMD.
+ * @ingroup tests_pldm_platform
+ */
 ZTEST(pldm_platform, test_unsupported_command_returns_error)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);

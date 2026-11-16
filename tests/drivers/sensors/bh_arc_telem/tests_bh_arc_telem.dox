@@ -1,0 +1,11 @@
+/**
+
+@brief ARC telemetry sensor
+@defgroup tests_bh_arc_telem ARC telemetry sensor
+@ingroup all_tests
+@details
+Die temperature and power readings from the telemetry sensor, as reported by the ARC. The tests feed in a simulated temperature and check the decoded readings.
+@{
+@}
+
+*/

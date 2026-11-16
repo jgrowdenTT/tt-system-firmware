@@ -154,6 +154,11 @@ static void *tt_d2d_setup(void)
 	return NULL;
 }
 
+/**
+ * @brief The loader copies the image into SRAM word for word.
+ * @details Loads a known pattern and reads back every word.
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_load_writes_image)
 {
 	int ret;
@@ -176,6 +181,11 @@ ZTEST(tt_d2d, test_load_writes_image)
 	PASSED(P_IMAGE);
 }
 
+/**
+ * @brief The loader clears SRAM past the end of the image.
+ * @details A stale word placed after the image reads as zero after the load.
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_load_clears_sram_beyond_image)
 {
 	/* Dirty a word past the image so a load that only writes the image
@@ -200,6 +210,11 @@ ZTEST(tt_d2d, test_load_clears_sram_beyond_image)
 	PASSED(P_CLEAR);
 }
 
+/**
+ * @brief The loader writes the configuration block.
+ * @details Checks the magic value, bits per channel and PLL frequency against the devicetree.
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_load_writes_config_block)
 {
 	int ret;
@@ -227,6 +242,11 @@ ZTEST(tt_d2d, test_load_writes_config_block)
 	PASSED(P_CONFIG);
 }
 
+/**
+ * @brief The bypass flags in the configuration block follow the devicetree.
+ * @details The first tile sets all three bypasses, the second sets none.
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_bypass_flags_follow_devicetree)
 {
 	int ret;
@@ -259,6 +279,12 @@ ZTEST(tt_d2d, test_bypass_flags_follow_devicetree)
 	PASSED(P_BYPASS);
 }
 
+/**
+ * @brief The loader rejects bad arguments.
+ * @details A NULL image, an empty image, an unaligned length and an oversized image fail
+ * with an error and do not reach SRAM.
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_load_rejects_bad_arguments)
 {
 	STEP(T_ARGS, 1);
@@ -276,6 +302,11 @@ ZTEST(tt_d2d, test_load_rejects_bad_arguments)
 	PASSED(P_ARGS);
 }
 
+/**
+ * @brief The core stays halted after a load and runs after it is started.
+ * @details Reads the core control register before and after tt_d2d_start().
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_load_halts_and_start_releases)
 {
 	int ret;
@@ -314,6 +345,11 @@ ZTEST(tt_d2d, test_load_halts_and_start_releases)
  *
  * The image under test is this test's generated stand-in, not the real
  * firmware; what is being checked is the mechanism carrying it.
+ */
+/**
+ * @brief The firmware image linked into the test loads intact.
+ * @details Checks the linked image, loads it, and reads back every word.
+ * @ingroup tests_d2d_load
  */
 ZTEST(tt_d2d, test_linked_fw_image_loads)
 {
@@ -411,6 +447,12 @@ static size_t highest_nonzero(uintptr_t sram, size_t start, size_t end)
 	return end;
 }
 
+/**
+ * @brief The started firmware writes to SRAM.
+ * @details After the core is released, the region past the image changes, which shows
+ * the firmware ran. Skipped when the image is the generated stand-in.
+ * @ingroup tests_d2d_load
+ */
 ZTEST(tt_d2d, test_started_firmware_executes)
 {
 	const uintptr_t sram = D2D0_BASE + SRAM_OFFSET;

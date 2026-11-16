@@ -59,6 +59,11 @@ static void set_emulated_temp_and_wait(float temp_c)
 	k_msleep(TELEM_REFRESH_MS + 20);
 }
 
+/**
+ * @brief Verify GetTID returns the current terminus ID.
+ * @details Sends GetTID and checks success and that the returned TID is 0x0B.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_tid)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_TID_REQ_BYTES);
@@ -78,6 +83,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_tid)
 	zassert_equal(tid, 0x0BU);
 }
 
+/**
+ * @brief Verify GetPLDMTypes returns the supported PLDM types.
+ * @details Sends GetPLDMTypes and checks the base and platform types are advertised, plus the OEM type when the shell is enabled.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_types)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_TYPES_REQ_BYTES);
@@ -101,6 +111,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_types)
 #endif
 }
 
+/**
+ * @brief Verify GetPLDMVersion returns the expected version for a type.
+ * @details Sends GetPLDMVersion for the base type and checks the transfer flag is START_AND_END and the version fields match 0xF1.0xF1, update 0xF0, alpha 0x00.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_version)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_VERSION_REQ_BYTES);
@@ -133,6 +148,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_version)
 	zassert_equal(version.alpha, expected_version.alpha);
 }
 
+/**
+ * @brief Verify GetPLDMCommands returns the supported commands for a type.
+ * @details Sends GetPLDMCommands for the base type and checks GetTID, GetPLDMTypes, GetPLDMVersion and GetPLDMCommands are supported.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_commands)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_COMMANDS_REQ_BYTES);
@@ -155,6 +175,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_commands)
 	zassert_true(PLDM_BIT(commands, GET_PLDM_COMMANDS));
 }
 
+/**
+ * @brief Verify platform-type command discovery via GetPLDMCommands.
+ * @details Sends GetPLDMCommands for the platform type and checks GetSensorReading, GetPDRRepositoryInfo and GetPDR are supported.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_platform_commands)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_COMMANDS_REQ_BYTES);
@@ -176,6 +201,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_platform_commands)
 	zassert_true(PLDM_BIT(commands, GET_PDR));
 }
 
+/**
+ * @brief Verify GetPDRRepositoryInfo reports the repository state.
+ * @details Sends GetPDRRepositoryInfo and checks the record count, repository size and largest record size are non-zero, with the largest record no bigger than the repository.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_repository_info)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);
@@ -206,6 +236,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_repository_info)
 	zassert_true(largest_record_size <= repository_size);
 }
 
+/**
+ * @brief Verify GetPDR returns the first record in the repository.
+ * @details Requests record 1 in one 48-byte chunk and checks the response count is within the request, the first byte is non-zero, and the transfer flag is START or START_AND_END.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_first_record)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -236,6 +271,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_first_record)
 		     transfer_flag == PLDM_PLATFORM_TRANSFER_START);
 }
 
+/**
+ * @brief Verify GetPDR reports numeric sensor units.
+ * @details Fetches the numeric sensor PDRs for the ASIC temperature and TDP sensors across all parts and checks the sensor ID, base unit (degrees C and watts), and SINT32 data and range formats.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_numeric_sensor_units)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -315,6 +355,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_numeric_sensor_units)
 	}
 }
 
+/**
+ * @brief Verify GetPDR rejects an unknown record handle.
+ * @details Requests an unknown record handle and checks the response is INVALID_RECORD_HANDLE.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_invalid_record_handle)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -329,6 +374,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_invalid_record_handle)
 				  PLDM_PLATFORM_INVALID_RECORD_HANDLE);
 }
 
+/**
+ * @brief Verify GetPDR rejects an invalid record change number.
+ * @details Requests record 1 with a wrong record change number and checks the response is INVALID_RECORD_CHANGE_NUMBER.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_invalid_record_change_number)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -343,6 +393,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_invalid_record_change_number)
 				  PLDM_PLATFORM_INVALID_RECORD_CHANGE_NUMBER);
 }
 
+/**
+ * @brief Verify GetSensorReading returns a reading for a valid sensor.
+ * @details Injects 24.5 C into the emulated sensor and checks the ASIC temperature reading is 245 (0.1 C units) with the sensor enabled, events disabled and state normal.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_sensor_reading)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -382,6 +437,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_sensor_reading)
 	zassert_equal((int32_t)sys_get_le32(present_reading), 245);
 }
 
+/**
+ * @brief Verify GetSensorReading rejects an invalid sensor ID.
+ * @details Requests an unknown sensor ID (0xBEEF) and checks the response is INVALID_SENSOR_ID.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_sensor_reading_invalid_id)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -395,6 +455,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_sensor_reading_invalid_id)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_PLATFORM_INVALID_SENSOR_ID);
 }
 
+/**
+ * @brief Verify an unsupported base-type command returns an error.
+ * @details Sends undefined base command 0xFF and checks the response is UNSUPPORTED_PLDM_CMD.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_unsupported_base_command)
 {
 	PLDM_MSG_BUFFER(req_buf, 1U);
@@ -410,6 +475,11 @@ ZTEST(dmc_pldm_mctp_transport, test_unsupported_base_command)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_UNSUPPORTED_PLDM_CMD);
 }
 
+/**
+ * @brief Verify GetPLDMVersion rejects a request of the wrong length.
+ * @details Sends GetPLDMVersion with an extra payload byte and checks the response is INVALID_LENGTH.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_version_invalid_length)
 {
 	uint8_t bad_payload = 0U;
@@ -429,6 +499,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_version_invalid_length)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify requests for an unsupported PLDM type are rejected.
+ * @details Sends GetTID under undefined PLDM type 0x3E and checks the response is INVALID_PLDM_TYPE.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_invalid_pldm_type)
 {
 	PLDM_MSG_BUFFER(req_buf, 1U);
@@ -444,6 +519,11 @@ ZTEST(dmc_pldm_mctp_transport, test_invalid_pldm_type)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_PLDM_TYPE);
 }
 
+/**
+ * @brief Verify GetTID rejects a request of the wrong length.
+ * @details Sends GetTID with an extra payload byte and checks the response is INVALID_LENGTH.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_tid_invalid_length)
 {
 	uint8_t bad_payload = 0U;
@@ -462,6 +542,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_tid_invalid_length)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify SetTID updates the terminus ID.
+ * @details Sets the TID to 0x42, checks GetTID returns 0x42, then restores 0x0B so later tests are unaffected.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_set_tid)
 {
 	PLDM_MSG_BUFFER(set_req_buf, PLDM_SET_TID_REQ_BYTES);
@@ -497,6 +582,11 @@ ZTEST(dmc_pldm_mctp_transport, test_set_tid)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_SUCCESS);
 }
 
+/**
+ * @brief Verify SetTID rejects a request of the wrong length.
+ * @details Sends SetTID with no payload (it needs one byte) and checks the response is INVALID_LENGTH.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_set_tid_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);
@@ -513,6 +603,11 @@ ZTEST(dmc_pldm_mctp_transport, test_set_tid_invalid_length)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify a SetTID change is reflected in the advertised command set.
+ * @details Sends GetPLDMCommands for the base type and checks SetTID is advertised.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_set_tid_advertised_in_commands)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_COMMANDS_REQ_BYTES);
@@ -531,6 +626,11 @@ ZTEST(dmc_pldm_mctp_transport, test_set_tid_advertised_in_commands)
 	zassert_true(PLDM_BIT(commands, SET_TID));
 }
 
+/**
+ * @brief Verify GetPLDMTypes rejects a request of the wrong length.
+ * @details Sends GetPLDMTypes with an extra payload byte and checks the response is INVALID_LENGTH.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_types_invalid_length)
 {
 	uint8_t bad_payload = 0U;
@@ -550,6 +650,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_types_invalid_length)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify GetPLDMVersion rejects an invalid operation flag.
+ * @details Sends GetPLDMVersion with the NEXTPART operation flag and checks the response is the invalid transfer operation flag error.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_version_invalid_opflag)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_VERSION_REQ_BYTES);
@@ -564,6 +669,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_version_invalid_opflag)
 				  PLDM_GET_PLDM_VERSION_INVALID_TRANSFER_OPERATION_FLAG);
 }
 
+/**
+ * @brief Verify GetPLDMVersion returns the expected version for the platform type.
+ * @details Sends GetPLDMVersion for the platform type and checks the transfer flag and version fields match the base type's.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_version_platform)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_VERSION_REQ_BYTES);
@@ -598,6 +708,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_version_platform)
 	zassert_equal(version.alpha, expected_version.alpha);
 }
 
+/**
+ * @brief Verify GetPLDMVersion rejects an unsupported PLDM type.
+ * @details Sends GetPLDMVersion with undefined PLDM type 0x3E in the request data and checks the invalid-type-in-request-data error.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_version_invalid_type)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_VERSION_REQ_BYTES);
@@ -612,6 +727,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_version_invalid_type)
 				  PLDM_GET_PLDM_VERSION_INVALID_PLDM_TYPE_IN_REQUEST_DATA);
 }
 
+/**
+ * @brief Verify GetPLDMCommands rejects an unsupported PLDM type.
+ * @details Sends GetPLDMCommands with undefined PLDM type 0x3E and checks the invalid-type-in-request-data error.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_commands_invalid_type)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_COMMANDS_REQ_BYTES);
@@ -626,6 +746,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_commands_invalid_type)
 				  PLDM_GET_PLDM_COMMANDS_INVALID_PLDM_TYPE_IN_REQUEST_DATA);
 }
 
+/**
+ * @brief Verify GetPDRRepositoryInfo rejects a request of the wrong length.
+ * @details Sends GetPDRRepositoryInfo with an extra payload byte and checks the response is INVALID_LENGTH.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_repository_info_invalid_length)
 {
 	uint8_t bad_payload = 0xAAU;
@@ -645,6 +770,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_repository_info_invalid_length)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify GetPDR handles a zero-count request.
+ * @details Hand-crafts a GetPDR with request_count 0 (bypassing the encoder) and checks the response is INVALID_DATA.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_zero_count)
 {
 	/* Craft a GetPDR request with request_count=0 by hand to bypass encoder validation. */
@@ -671,6 +801,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_zero_count)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_INVALID_DATA);
 }
 
+/**
+ * @brief Verify GetPDR rejects an invalid operation flag.
+ * @details Hand-crafts a GetPDR with transfer operation flag 0x05 and checks the response is the invalid transfer operation flag error.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_invalid_opflag)
 {
 	/* Craft a GetPDR request with an invalid transfer_op_flag by hand. */
@@ -698,6 +833,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_invalid_opflag)
 				  PLDM_PLATFORM_INVALID_TRANSFER_OPERATION_FLAG);
 }
 
+/**
+ * @brief Verify GetPDR returns a record across multiple parts.
+ * @details Requests record 1 with a 1-byte chunk limit, checks the first response is START, then pulls NEXTPART chunks until the transfer stops reporting MIDDLE and each one succeeds.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_multipart)
 {
 	/*
@@ -744,6 +884,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_multipart)
 	} while (transfer_flag == PLDM_MIDDLE);
 }
 
+/**
+ * @brief Verify a next-part request with the wrong record handle is rejected.
+ * @details Starts a partial transfer, then sends NEXTPART with the data transfer handle off by one and checks the response is INVALID_DATA_TRANSFER_HANDLE.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_nextpart_wrong_handle)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -779,6 +924,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_nextpart_wrong_handle)
 				  PLDM_PLATFORM_INVALID_DATA_TRANSFER_HANDLE);
 }
 
+/**
+ * @brief Verify enumerating all PDRs returns every record.
+ * @details Walks the repository by following next-record handles, draining each record's chunks, and checks every record ends with START_AND_END or END and the walk finds records and terminates at handle 0.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_enumerate_all)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_PDR_REQ_BYTES);
@@ -836,6 +986,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_enumerate_all)
 	zassert_true(record_num > 0U, "no PDR records found");
 }
 
+/**
+ * @brief Verify GetPDR transfer flags for a middle part of a multipart sequence.
+ * @details Fetches record 1 in 2-byte chunks and checks the flags run START, then MIDDLE, then END or START_AND_END, with at least one MIDDLE chunk.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_transfer_flag_middle_sequence)
 {
 	/*
@@ -885,6 +1040,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_transfer_flag_middle_sequence)
 	zassert_true(chunk_count > 0);
 }
 
+/**
+ * @brief Verify a next-part request without an active transfer is rejected.
+ * @details Sends NEXTPART with an arbitrary handle and no prior FIRSTPART, and checks the response is INVALID_DATA_TRANSFER_HANDLE.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_nextpart_without_active_transfer)
 {
 	/*
@@ -906,6 +1066,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_nextpart_without_active_transfer)
 				  PLDM_PLATFORM_INVALID_DATA_TRANSFER_HANDLE);
 }
 
+/**
+ * @brief Verify PDR data integrity across a multipart transfer.
+ * @details Reads record 1 once in one large chunk and once in 8-byte chunks, then checks both reassembled copies have the same length and bytes.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_pdr_data_integrity_multipart)
 {
 	/*
@@ -988,6 +1153,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_pdr_data_integrity_multipart)
 	zassert_mem_equal(full_record, chunked_record, full_offset);
 }
 
+/**
+ * @brief Verify GetSensorReading handles the rearm flag.
+ * @details Sends GetSensorReading with the rearm flag set and checks the response is REARM_UNAVAILABLE_IN_PRESENT_STATE.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_get_sensor_reading_rearm)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_SENSOR_READING_REQ_BYTES);
@@ -1002,6 +1172,11 @@ ZTEST(dmc_pldm_mctp_transport, test_get_sensor_reading_rearm)
 				  PLDM_PLATFORM_REARM_UNAVAILABLE_IN_PRESENT_STATE);
 }
 
+/**
+ * @brief Verify an unsupported platform-type command returns an error.
+ * @details Sends undefined platform command 0xFF and checks the response is UNSUPPORTED_PLDM_CMD.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_unsupported_platform_command)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);
@@ -1017,6 +1192,11 @@ ZTEST(dmc_pldm_mctp_transport, test_unsupported_platform_command)
 	validate_cc_only_response(g_resp, g_resp_pldm_payload_len, PLDM_ERROR_UNSUPPORTED_PLDM_CMD);
 }
 
+/**
+ * @brief Verify the OEM shell kernel uptime command returns a value.
+ * @details Runs "kernel uptime" through the OEM shell, polls GetResult in 40-byte chunks until it finishes, and checks the shell returns 0 and the output mentions uptime.
+ * @ingroup tests_pldm_mctp_transport
+ */
 ZTEST(dmc_pldm_mctp_transport, test_oem_shell_kernel_uptime)
 {
 	static const char cmd[] = "kernel uptime";

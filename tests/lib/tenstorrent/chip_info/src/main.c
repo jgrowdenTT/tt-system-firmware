@@ -24,18 +24,35 @@
  */
 #define TT_PCIE_VENDOR_ID 0x1e52
 
+/**
+ * @brief Checks that recovery reports the Tenstorrent PCI vendor ID.
+ * @details Asserts that bh_chip_info_vendor_id() returns 0x1e52 so the device enumerates as
+ * Tenstorrent.
+ * @ingroup tests_chip_info
+ */
 ZTEST(chip_info_static, test_vendor_id_is_tenstorrent)
 {
 	zassert_equal(bh_chip_info_vendor_id(), TT_PCIE_VENDOR_ID,
 		      "recovery must program the Tenstorrent PCI vendor ID (0x1e52)");
 }
 
+/**
+ * @brief Checks the default additional board power in recovery.
+ * @details Asserts that bh_chip_info_additional_board_power() returns 0.
+ * @ingroup tests_chip_info
+ */
 ZTEST(chip_info_static, test_board_identity_defaults)
 {
 	zassert_equal(bh_chip_info_additional_board_power(), 0,
 		      "recovery reports no extra board power budget");
 }
 
+/**
+ * @brief Checks that board and feature flags default to off in recovery.
+ * @details Asserts that the board is not a UBB revision and that clock gating and NOC translation
+ * are disabled.
+ * @ingroup tests_chip_info
+ */
 ZTEST(chip_info_static, test_features_disabled)
 {
 	/* native_sim is not a Galaxy/UBB board revision. */
@@ -45,6 +62,12 @@ ZTEST(chip_info_static, test_features_disabled)
 		      "NOC translation defaults off in recovery");
 }
 
+/**
+ * @brief Checks the PCIe properties synthesized by recovery.
+ * @details Asserts endpoint mode, two SerDes, unconstrained PCIe speed, and BAR sizes that match
+ * the PCIe driver defaults.
+ * @ingroup tests_chip_info
+ */
 ZTEST(chip_info_static, test_pci_property_defaults)
 {
 	struct bh_pci_property prop;
@@ -60,6 +83,11 @@ ZTEST(chip_info_static, test_pci_property_defaults)
 	zassert_equal(prop.pcie_bar4_size, PCIE_BAR4_SIZE_DEFAULT_MB, "BAR4 must match pcie.c");
 }
 
+/**
+ * @brief Checks that PCIe properties do not depend on the instance.
+ * @details Asserts that PCIe instances 0 and 1 return identical property structures.
+ * @ingroup tests_chip_info
+ */
 ZTEST(chip_info_static, test_pci_property_instance_independent)
 {
 	struct bh_pci_property prop0;

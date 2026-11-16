@@ -1,0 +1,13 @@
+/**
+
+@brief PCIe endpoint tests
+@defgroup tests_pcie PCIe endpoint
+@ingroup all_tests
+@details
+Bring-up of the PCIe endpoint device on the SMC. The test stages the SERDES firmware
+bundle that the endpoint driver expects from BL1, then checks that the endpoint device
+initialised. The bundle is staged by the test itself, because the test runs without BL1.
+@{
+@}
+
+*/

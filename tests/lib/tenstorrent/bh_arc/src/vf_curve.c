@@ -9,6 +9,11 @@
 #include <tenstorrent/msgqueue.h>
 #include <stdlib.h>
 
+/**
+ * @brief GET_FREQ_CURVE_FROM_VOLTAGE returns a plausible frequency.
+ * @details Requests the frequency for 800 mV and checks it is positive and below 5000 MHz.
+ * @ingroup tests_bh_arc_vf
+ */
 ZTEST(vf_curve, test_get_freq_curve_from_voltage_handler)
 {
 	union request req = {0};
@@ -27,6 +32,11 @@ ZTEST(vf_curve, test_get_freq_curve_from_voltage_handler)
 	zassert_true(rsp.data[1] < 5000, "Expected reasonable frequency range");
 }
 
+/**
+ * @brief GET_VOLTAGE_CURVE_FROM_FREQ returns a plausible voltage.
+ * @details Requests the voltage for 1000 MHz and checks it lies between 500 and 1200 mV.
+ * @ingroup tests_bh_arc_vf
+ */
 ZTEST(vf_curve, test_get_voltage_curve_from_freq_handler)
 {
 	union request req = {0};
@@ -45,6 +55,12 @@ ZTEST(vf_curve, test_get_voltage_curve_from_freq_handler)
 	zassert_true(rsp.data[1] < 1200, "Expected voltage < 1200mV");
 }
 
+/**
+ * @brief Converting frequency to voltage and back returns close to the start.
+ * @details Converts 1000 MHz to a voltage and back, and checks the result is within 50 MHz of the
+ * starting frequency.
+ * @ingroup tests_bh_arc_vf
+ */
 ZTEST(vf_curve, test_voltage_frequency_roundtrip)
 {
 	union request req = {0};

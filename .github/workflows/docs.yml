@@ -192,6 +192,10 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     needs: [gen-config]
+    permissions:
+      contents: read
+      # Needed by scripts/fetch_ci_status.py to read recent Unit runs on main.
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -211,9 +215,14 @@ jobs:
           pip install west
           west init -l tt-system-firmware
           west update
+          # twister is run in list-only mode to find which platforms each test runs on
+          pip install -r zephyr/scripts/requirements-base.txt
 
       - name: Build
         working-directory: tt-system-firmware
+        env:
+          # Read-only token so fetch_ci_status.py can list and download Unit artifacts.
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Install any additional packages needed for doc build
           sudo apt-get install -y graphviz
@@ -224,8 +233,10 @@ jobs:
           # It's required because symlinks trip check_compliance.py.
           ln -sf ../boards .
 
-          rm -f zephyr.tag
-          wget https://docs.zephyrproject.org/latest/doxygen/html/zephyr.tag -O /tmp/zephyr.tag
+          # Generated inputs for doxygen; the same targets make doxygen uses locally.
+          # The Zephyr tag comes from doc/Makefile (_generated/zephyr.tag), and the platform
+          # list and CI status come from twister and scripts/fetch_ci_status.py.
+          make zephyr-tag test-platforms
 
           # We should try to limit the number of environment variables we reference in Doxyfile
           # but they can be added here, as needed.

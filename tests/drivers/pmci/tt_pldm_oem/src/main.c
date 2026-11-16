@@ -168,6 +168,11 @@ static int parse_result_response(const struct pldm_msg *resp_msg, size_t resp_pl
 	return 0;
 }
 
+/**
+ * @brief Verify the OEM versions query returns the expected values.
+ * @details Checks the OEM handler reports two version entries, the first being 0xF1.0xF0 with update 0xF0 and alpha 0x00.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_versions_get_has_expected_values)
 {
 	size_t versions_size = 0U;
@@ -181,6 +186,11 @@ ZTEST(tt_pldm_oem, test_versions_get_has_expected_values)
 	zassert_equal(versions[0].alpha, 0x00U);
 }
 
+/**
+ * @brief Verify the OEM commands query lists the shell commands.
+ * @details Checks SHELL_EXEC, SHELL_GET_RESULT and SHELL_CANCEL are set in the OEM command bitmap.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_commands_get_contains_shell_commands)
 {
 	const bitfield8_t *commands = pldm_oem_handler_get_commands(oem_dev);
@@ -194,6 +204,11 @@ ZTEST(tt_pldm_oem, test_commands_get_contains_shell_commands)
 		      BIT(TT_PLDM_OEM_CMD_SHELL_CANCEL % 8)) != 0U);
 }
 
+/**
+ * @brief Verify OEM exec rejects an invalid length.
+ * @details Sends SHELL_EXEC with a two-byte payload and checks it returns INVALID_LENGTH.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_exec_rejects_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, 2U);
@@ -218,6 +233,11 @@ ZTEST(tt_pldm_oem, test_exec_rejects_invalid_length)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify OEM get-result rejects an invalid length.
+ * @details Sends SHELL_GET_RESULT with a four-byte payload and checks it returns INVALID_LENGTH.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_get_result_rejects_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, 5U);
@@ -242,6 +262,11 @@ ZTEST(tt_pldm_oem, test_get_result_rejects_invalid_length)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify OEM get-result returns invalid data when idle.
+ * @details Requests a result with no command running and checks it returns INVALID_DATA.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_get_result_when_idle_returns_invalid_data)
 {
 	PLDM_MSG_BUFFER(resp_buf, RESP_BUF_PAYLOAD_MAX);
@@ -258,6 +283,11 @@ ZTEST(tt_pldm_oem, test_get_result_when_idle_returns_invalid_data)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_DATA);
 }
 
+/**
+ * @brief Verify OEM get-result rejects a mismatched request ID.
+ * @details Starts a command, then asks for its result with a different request ID and checks it returns INVALID_DATA.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_get_result_rejects_mismatched_request_id)
 {
 	PLDM_MSG_BUFFER(resp_buf, RESP_BUF_PAYLOAD_MAX);
@@ -281,6 +311,11 @@ ZTEST(tt_pldm_oem, test_get_result_rejects_mismatched_request_id)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_DATA);
 }
 
+/**
+ * @brief Verify OEM cancel returns invalid data when idle.
+ * @details Sends SHELL_CANCEL with no command running and checks it returns INVALID_DATA.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_cancel_when_idle_returns_invalid_data)
 {
 	PLDM_MSG_BUFFER(req_buf, 2U);
@@ -306,6 +341,11 @@ ZTEST(tt_pldm_oem, test_cancel_when_idle_returns_invalid_data)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_DATA);
 }
 
+/**
+ * @brief Verify an OEM exec followed by get-result succeeds.
+ * @details Runs "help" through the shell, polls results in 40-byte chunks until the command finishes, and checks the echoed request ID, shell return code 0, state DONE, and that the reassembled output length matches the reported total.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_exec_and_get_result_success)
 {
 	PLDM_MSG_BUFFER(resp_buf, RESP_BUF_PAYLOAD_MAX);
@@ -368,6 +408,11 @@ ZTEST(tt_pldm_oem, test_exec_and_get_result_success)
 	zassert_equal(decoded.more, 0U);
 }
 
+/**
+ * @brief Verify OEM get-result rejects an invalid offset.
+ * @details Runs "help" to completion, then requests a result offset past the end of the output and checks it returns INVALID_DATA.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_get_result_rejects_invalid_offset)
 {
 	PLDM_MSG_BUFFER(resp_buf, RESP_BUF_PAYLOAD_MAX);
@@ -410,6 +455,11 @@ ZTEST(tt_pldm_oem, test_get_result_rejects_invalid_offset)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_DATA);
 }
 
+/**
+ * @brief Verify an unsupported OEM command returns an error.
+ * @details Builds a response for undefined OEM command 0x7F and checks it returns UNSUPPORTED_PLDM_CMD.
+ * @ingroup tests_pldm_oem
+ */
 ZTEST(tt_pldm_oem, test_unsupported_command_returns_error)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);

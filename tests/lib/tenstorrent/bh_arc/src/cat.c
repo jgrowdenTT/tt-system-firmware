@@ -34,12 +34,24 @@ static void before(void *fixture)
 	cool();
 }
 
+/**
+ * @brief A reading below the sustained threshold never trips.
+ * @details Holds a temperature just under the threshold past the dwell time and checks no trip is
+ * reported.
+ * @ingroup tests_bh_arc_cat
+ */
 ZTEST(cat, test_all_cold_never_trips)
 {
 	/* Not hot, so even after a long time nothing trips */
 	zassert_equal(MONITOR(DUR + 1000, COLD), 0);
 }
 
+/**
+ * @brief A hot spike that cools before the dwell time does not trip.
+ * @details Heats past the threshold, cools before the dwell time completes and checks no trip
+ * occurs. Checks cooling resets the timer.
+ * @ingroup tests_bh_arc_cat
+ */
 ZTEST(cat, test_brief_spike_does_not_trip)
 {
 	zassert_equal(MONITOR(0, HOT), 0, "should not trip on first hot reading");
@@ -51,6 +63,12 @@ ZTEST(cat, test_brief_spike_does_not_trip)
 	zassert_equal(MONITOR(DUR + 1000, COLD), 0, "cooling off must reset the timer");
 }
 
+/**
+ * @brief Sustained over-temperature trips once the dwell time elapses.
+ * @details Holds the threshold temperature and checks no trip one millisecond before the dwell
+ * time. Checks the trip at the dwell time returns that temperature.
+ * @ingroup tests_bh_arc_cat
+ */
 ZTEST(cat, test_sustained_over_temp_trips)
 {
 	zassert_equal(MONITOR(0, HOT), 0);
@@ -62,12 +80,24 @@ ZTEST(cat, test_sustained_over_temp_trips)
 	zassert_equal(MONITOR(DUR, HOT), HOT, "sustained over-temp must trip");
 }
 
+/**
+ * @brief The critical temperature trips with no dwell time.
+ * @details Reports the critical temperature on the first reading and checks it trips at once,
+ * returning that temperature.
+ * @ingroup tests_bh_arc_cat
+ */
 ZTEST(cat, test_critical_temp_trips_immediately)
 {
 	/* At or above the critical temperature there is no dwell requirement */
 	zassert_equal(MONITOR(0, CRITICAL), CRITICAL, "critical temp must trip immediately");
 }
 
+/**
+ * @brief Zero thresholds disable the trip paths.
+ * @details Evaluates an extreme temperature with zero thresholds, both immediately and after the
+ * dwell time. Checks no trip is reported.
+ * @ingroup tests_bh_arc_cat
+ */
 ZTEST(cat, test_zero_thresholds_never_trip)
 {
 	/* Unset (0) thresholds disable their trip path, even at a scorching temp. */

@@ -36,6 +36,12 @@ static void tear_down_tc(void *fixture)
 	smbus_target_cfg->callbacks->stop(smbus_target_cfg);
 }
 
+/**
+ * @brief Writing command 0 is rejected.
+ * @details Sends command 0, which is not valid, and checks the write fails and the SMBus error
+ * count rises by one.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_received_bad_cmd_0)
 {
 	/* 0 is not a valid command */
@@ -46,6 +52,12 @@ ZTEST(smbus_target, test_write_received_bad_cmd_0)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief Writing command 255 is rejected.
+ * @details Sends command 255, which is not valid, and checks the write fails and the error count
+ * rises by one.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_received_bad_cmd_255)
 {
 	/* 255 is not a valid command */
@@ -56,6 +68,11 @@ ZTEST(smbus_target, test_write_received_bad_cmd_255)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief Writing the out-of-range command CMFW_SMBUS_MSG_MAX is rejected.
+ * @details Checks the write fails and the error count rises by one.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_received_bad_cmd_msg_max)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_MSG_MAX};
@@ -66,6 +83,12 @@ ZTEST(smbus_target, test_write_received_bad_cmd_msg_max)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A write with an invalid command byte followed by another is rejected.
+ * @details Sends command 0 followed by CMFW_SMBUS_MSG_MAX in one write. Checks it fails and counts
+ * one error.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_received_cmd_before_stop)
 {
 	uint8_t write_data[] = {0, CMFW_SMBUS_MSG_MAX};
@@ -76,6 +99,12 @@ ZTEST(smbus_target, test_write_received_cmd_before_stop)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A read with no preceding command is rejected.
+ * @details Reads without first writing a command and checks the read fails, returns 0xFF and
+ * counts one error.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_unsolicited_read_received)
 {
 	uint8_t read_data[1];
@@ -87,6 +116,12 @@ ZTEST(smbus_target, test_unsolicited_read_received)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A block write with a mismatched byte count is rejected.
+ * @details Sends a block write declaring five data bytes but carrying an extra byte. Checks it
+ * fails and counts one error.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_received_bad_blocksize)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_WRITE_BLOCK, 5U, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 54U};
@@ -97,6 +132,12 @@ ZTEST(smbus_target, test_write_received_bad_blocksize)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A read-only command given data to write is rejected.
+ * @details Sends TEST_READ with an extra data byte and checks the write fails and counts one
+ * error.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_received_data_for_read_cmd)
 {
 	/* TEST_READ is a valid command but expects the user to write no additional data */
@@ -107,6 +148,12 @@ ZTEST(smbus_target, test_write_received_data_for_read_cmd)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A write-only command issued as a write-read is rejected.
+ * @details Issues a combined write-then-read for TEST_WRITE_BLOCK. Checks it fails, returns 0xFF
+ * and counts one error.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_rx_rqst_for_write_cmd)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_WRITE_BLOCK, 4U};
@@ -119,6 +166,12 @@ ZTEST(smbus_target, test_write_rx_rqst_for_write_cmd)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A byte read returns the stored register value.
+ * @details Sets the register to 0x5A, reads TEST_READ and checks the byte is 0x5A with no error
+ * counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_read_byte_test)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_READ};
@@ -134,6 +187,12 @@ ZTEST(smbus_target, test_read_byte_test)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A word read returns the two bytes of the stored value.
+ * @details Sets the register to 0x915A, reads TEST_READ_WORD and checks the bytes are 0x5A then
+ * 0x91. No error is counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_read_word_test)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_READ_WORD};
@@ -151,6 +210,12 @@ ZTEST(smbus_target, test_read_word_test)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A block read returns a length byte followed by the stored data.
+ * @details Sets the register to 0x8765915A and reads TEST_READ_BLOCK. Checks the length is 4, the
+ * four data bytes follow in order, and no error is counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_read_block_test)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_READ_BLOCK};
@@ -170,6 +235,12 @@ ZTEST(smbus_target, test_read_block_test)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A byte write stores the value in the scratch register.
+ * @details Writes one byte with TEST_WRITE. Checks the scratch register is written once with 0x5B
+ * tagged with length one.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_byte_test)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_WRITE, 0x5BU, 136U};
@@ -188,6 +259,12 @@ ZTEST(smbus_target, test_write_byte_test)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A word write stores two bytes in the scratch register.
+ * @details Writes two bytes with TEST_WRITE_WORD. Checks the scratch register is written once with
+ * 0x2A5B tagged with length two.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_word_test)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_WRITE_WORD, 0x5BU, 0x2AU, 177U};
@@ -207,6 +284,12 @@ ZTEST(smbus_target, test_write_word_test)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A block write stores its data bytes in the scratch register.
+ * @details Writes a four-byte block with TEST_WRITE_BLOCK. Checks the scratch register is written
+ * once with the bytes packed in order.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_write_block_test)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TEST_WRITE_BLOCK, 0x4, 0x5BU, 0x2AU, 0x13U, 0x99U, 243U};
@@ -226,6 +309,12 @@ ZTEST(smbus_target, test_write_block_test)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief Updating the ARC state to 3 sets the ASIC to state A3.
+ * @details Sends an update-ARC-state request with state 3 and checks the ASIC is in A3 with no
+ * error counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_update_arc_test_state_3)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_UPDATE_ARC_STATE, 0x3, 0x3U, 0xDEU, 0xAFU};
@@ -237,6 +326,12 @@ ZTEST(smbus_target, test_update_arc_test_state_3)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief Updating the ARC state to 0 sets the ASIC to state A0.
+ * @details Sends an update-ARC-state request with state 0 and checks the ASIC is in A0 with no
+ * error counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_update_arc_test_state_0)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_UPDATE_ARC_STATE, 0x3, 0x0U, 0xDEU, 0xAFU};
@@ -248,6 +343,12 @@ ZTEST(smbus_target, test_update_arc_test_state_0)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A telemetry read with a wrong block length is rejected.
+ * @details Sends a telemetry read declaring a length of three where one is expected. Checks it
+ * fails and counts one error.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_telem_read_bad_w_blocksize)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TELEMETRY_READ, 0x3, 0xAA, 0xBB, 0xCC};
@@ -257,6 +358,12 @@ ZTEST(smbus_target, test_telem_read_bad_w_blocksize)
 	zassert_equal(err_count_before + 1, get_smbus_error_count());
 }
 
+/**
+ * @brief A telemetry read returns the requested tag.
+ * @details Reads the AICLK tag and checks the response starts with length 7 and a zero second
+ * byte. No error is counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_telem_read)
 {
 	uint8_t write_data[] = {CMFW_SMBUS_TELEMETRY_READ, 0x1U, TAG_AICLK};
@@ -272,6 +379,12 @@ ZTEST(smbus_target, test_telem_read)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A telemetry write leaves the control word clear.
+ * @details Sends a 33-byte telemetry write and reads back 21 bytes. Checks the first byte is 20
+ * and the control word at offset 12 is zero.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_telem_write_no_reset)
 {
 	uint8_t write_data[35] = {[0] = CMFW_SMBUS_TELEMETRY_WRITE, [1] = 33U};
@@ -290,6 +403,12 @@ ZTEST(smbus_target, test_telem_write_no_reset)
 	zassert_equal(err_count_before, get_smbus_error_count());
 }
 
+/**
+ * @brief A block write followed by a block read returns the data.
+ * @details Writes four bytes to command 0xDE and reads a block back. Checks the length byte is 4
+ * and no error is counted.
+ * @ingroup tests_bh_arc_smbus
+ */
 ZTEST(smbus_target, test_block_write_block_read_with_pec)
 {
 	uint8_t write_data[] = {0xDE, 4, 0xde, 0xad, 0xbe, 0xef};

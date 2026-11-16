@@ -1,0 +1,12 @@
+/**
+
+@brief Boot filesystem tests
+@defgroup tests_boot_fs Boot filesystem
+@ingroup all_tests
+@details
+The boot filesystem stored in flash, which holds image descriptors. The tests cover checksums,
+descriptor listing and lookup by image tag.
+@{
+@}
+
+*/

@@ -59,6 +59,12 @@ static const uint8_t tt_i2c_addr = 0xA;
  * when protoc is missing), so a not-ready fwtable device is a real bh_fwtable
  * init/load regression and must FAIL — never skip.
  */
+/**
+ * @brief The bh_fwtable device is ready before any other test runs.
+ * @details Checks that the fwtable device pointer is non-NULL and reports ready, so a failed table
+ * load fails here first.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_0_fwtable_device_ready)
 {
 	const struct device *dev = FWTABLE_DEV;
@@ -212,6 +218,12 @@ static uint8_t msgqueue_handler_73(const union request *req, struct response *rs
 	return 0;
 }
 
+/**
+ * @brief A handler registered for a message ID is dispatched.
+ * @details Registers a handler for opcode 0x73, sends a request and checks the response holds the
+ * value the handler produced.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msgqueue_register_handler)
 {
 	msgqueue_register_handler(0x73, msgqueue_handler_73);
@@ -222,6 +234,12 @@ ZTEST(msgqueue, test_msgqueue_register_handler)
 	zassert_equal(rsp.data[1], 0x73737373);
 }
 
+/**
+ * @brief POWER_SETTING flags switch the max AICLK target and the L2CPU clocks.
+ * @details Sends POWER_SETTING with max AICLK on, then off, and checks the AICLK target moves
+ * between Fmax and Fmin. Checks the emulated L2CPU clocks stay off.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msgqueue_power_settings_cmd)
 {
 	const struct device *pll4 = DEVICE_DT_GET_OR_NULL(DT_NODELABEL(pll4));
@@ -281,6 +299,12 @@ ZTEST(msgqueue, test_msgqueue_power_settings_cmd)
 		      CLOCK_CONTROL_STATUS_OFF);
 }
 
+/**
+ * @brief GO_BUSY holds AICLK at Fmax across POWER_SETTING changes.
+ * @details AICLK stays at Fmax while busy or while POWER_SETTING is on, and drops to Fmin after a
+ * final POWER_SETTING off.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msgqueue_power_settings_with_go_busy)
 {
 	/* LSB to MSB:
@@ -343,6 +367,12 @@ ZTEST(msgqueue, test_msgqueue_power_settings_with_go_busy)
 	zexpect_equal(GetAiclkTarg(), GetAiclkFmin());
 }
 
+/**
+ * @brief SET_VOLTAGE writes the regulator's VOUT_COMMAND over I2C.
+ * @details Sends a set-voltage request for 800 mV and checks the I2C write carries VOUT_COMMAND
+ * and the value doubled.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_set_voltage)
 {
 	req.data[0] = TT_SMC_MSG_SET_VOLTAGE;
@@ -359,6 +389,11 @@ ZTEST(msgqueue, test_msg_type_set_voltage)
 	zexpect_equal(received_voltage, 800 * 2);
 }
 
+/**
+ * @brief GET_VOLTAGE reads the regulator voltage over I2C.
+ * @details Simulates an I2C read of 950 and checks the response reports that value halved.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_get_voltage)
 {
 	/*Setup the simulated voltage for the i2c read*/
@@ -373,6 +408,12 @@ ZTEST(msgqueue, test_msg_type_get_voltage)
 	zexpect_equal(rsp.data[1], simulated_voltage_mv / 2);
 }
 
+/**
+ * @brief SWITCH_VOUT_CONTROL enables VOUT control on a regulator.
+ * @details Checks the I2C traffic reads back OPERATION, then writes enable with the transition and
+ * command-source bits set.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_switch_vout_control)
 {
 	req.data[0] = TT_SMC_MSG_SWITCH_VOUT_CONTROL;
@@ -386,6 +427,12 @@ ZTEST(msgqueue, test_msg_type_switch_vout_control)
 	zexpect_equal(i2c_write_buf_emul[3], 0x12); /* transition_control and command_source high*/
 }
 
+/**
+ * @brief SWITCH_CLK_SCHEME selects the clock wave or zero-skew scheme.
+ * @details Switches to the clock wave scheme, then to zero skew, and checks the clock wave value
+ * changes from 2 to 1.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_switch_clk_scheme)
 {
 	/* Reset timer counter and set up the fake */
@@ -403,6 +450,12 @@ ZTEST(msgqueue, test_msg_type_switch_clk_scheme)
 	zassert_equal(clock_wave_value, 1U);
 }
 
+/**
+ * @brief DEBUG_NOC_TRANSLATION rejects an out-of-range GDDR index.
+ * @details Names GDDR 8 as bad and checks the reply is EINVAL truncated to a byte. Resends with no
+ * bad GDDR and checks success.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_debug_noc_translation)
 {
 	req.data[0] = TT_SMC_MSG_DEBUG_NOC_TRANSLATION | (BIT(0) << 8U) /* Enable translation*/
@@ -435,6 +488,12 @@ static void test_setup(void *ctx)
 	memset(i2c_write_buf_emul, 0, sizeof(i2c_write_buf_emul));
 }
 
+/**
+ * @brief SEND_PCIE_MSI writes the MSI number to the NOC-to-AXI window.
+ * @details Sends MSI numbers 0 and 1 for PCIe instance 1 and checks the last NOC-to-AXI write
+ * equals each number.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_send_pcie_msi)
 {
 	noc_2_axi_last_write = 0xffffffffU;
@@ -450,6 +509,11 @@ ZTEST(msgqueue, test_msg_type_send_pcie_msi)
 	zexpect_equal(noc_2_axi_last_write, 1);
 }
 
+/**
+ * @brief I2C_MESSAGE rejects an invalid I2C line ID.
+ * @details Sends a write to target 0x50 on line 5 and checks the reply is an error of 1.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_i2c_message_bad_line_id)
 {
 	union request req = {0};
@@ -470,6 +534,12 @@ ZTEST(msgqueue, test_msg_type_i2c_message_bad_line_id)
 	zassert_equal(rsp.data[0], 1);
 }
 
+/**
+ * @brief I2C_MESSAGE writes and reads four bytes on line 1.
+ * @details Writes four bytes to target 0x50 and checks they appear on the emulated bus in order.
+ * Checks the read-back is assembled little-endian.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_i2c_message)
 {
 	i2c_read_buf_emul[0] = 0x1U;
@@ -498,6 +568,12 @@ ZTEST(msgqueue, test_msg_type_i2c_message)
 	zexpect_equal(i2c_write_buf_emul[3], 0xdd);
 }
 
+/**
+ * @brief BLINKY posts an LED blink message to the DMC over SMBus.
+ * @details Sends a blink request with value 1, then reads the posted SMBus message as the DMC and
+ * checks it is an LED blink carrying 1. Then ACKs it.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_blink_led)
 {
 	clear_pending_smbus_messages();
@@ -519,6 +595,11 @@ ZTEST(msgqueue, test_msg_type_blink_led)
 	ack_smbus_message(&posted_msg);
 }
 
+/**
+ * @brief TEST returns its argument plus one.
+ * @details Sends 42 and checks the response is 43.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_test)
 {
 	req.data[0] = TT_SMC_MSG_TEST;
@@ -528,6 +609,12 @@ ZTEST(msgqueue, test_msg_type_test)
 	zexpect_equal(rsp.data[1], 43); /* test_value + 1 */
 }
 
+/**
+ * @brief ASIC_STATE3 and ASIC_STATE0 switch the ASIC state.
+ * @details Requests state 3 and checks the ASIC is in A3. Requests state 0 and checks it returns
+ * to A0 with success.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_asic_state)
 {
 	req.data[0] = TT_SMC_MSG_ASIC_STATE3;
@@ -542,6 +629,12 @@ ZTEST(msgqueue, test_msg_type_asic_state)
 	zexpect_equal(get_asic_state(), A0State);
 }
 
+/**
+ * @brief READ_EEPROM fails when no flash device is present.
+ * @details Sends a 64-byte read at SPI address 0x1000 with no flash available and checks the reply
+ * is 1.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_read_eeprom_no_flash)
 {
 	req = (union request){0};
@@ -560,6 +653,12 @@ ZTEST(msgqueue, test_msg_type_read_eeprom_no_flash)
 	zassert_equal(rsp.data[0], 1);
 }
 
+/**
+ * @brief FORCE_VDD accepts voltages inside the envelope and 0, and rejects others.
+ * @details Derives the voltage envelope from the loaded fw_table. Checks an in-range value and 0
+ * are accepted, and values just above and below the envelope are rejected.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_force_vdd)
 {
 	/* Exercises TT_SMC_MSG_FORCE_VDD. Handler under test: ForceVddHandler
@@ -611,6 +710,11 @@ ZTEST(msgqueue, test_msg_type_force_vdd)
 	push_msg_failure("below-range %u (envelope [%u, %u])", too_low, vdd_min, vdd_max);
 }
 
+/**
+ * @brief A valid chip-to-host PCIe DMA transfer is accepted.
+ * @details Sends a 4 KiB chip-to-host transfer with valid addresses and checks it succeeds.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_pcie_dma_chip_to_host)
 {
 	req.pcie_dma_transfer.command_code = TT_SMC_MSG_PCIE_DMA_CHIP_TO_HOST_TRANSFER;
@@ -625,6 +729,11 @@ ZTEST(msgqueue, test_msg_type_pcie_dma_chip_to_host)
 	zassert_equal(rsp.data[0], 0, "Chip-to-host DMA transfer should succeed");
 }
 
+/**
+ * @brief A valid host-to-chip PCIe DMA transfer is accepted.
+ * @details Sends a 2 KiB host-to-chip transfer with valid addresses and checks it succeeds.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_pcie_dma_host_to_chip)
 {
 	req.pcie_dma_transfer.command_code = TT_SMC_MSG_PCIE_DMA_HOST_TO_CHIP_TRANSFER;
@@ -639,6 +748,11 @@ ZTEST(msgqueue, test_msg_type_pcie_dma_host_to_chip)
 	zassert_equal(rsp.data[0], 0, "Host-to-chip DMA transfer should succeed");
 }
 
+/**
+ * @brief TRIGGER_RESET rejects an unknown reset level.
+ * @details Sends reset level 5 and checks the reply returns that level as the error.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_trigger_reset_invalid)
 {
 	/* Invalid reset level should be rejected */
@@ -711,6 +825,12 @@ static uint32_t try_eeprom_write(void)
 	return rsp.data[0];
 }
 
+/**
+ * @brief An MT25 flash unlocks without any board variables.
+ * @details Unlocks an MT25QU512ABB flash with no variables and checks it succeeds with none
+ * required. A following write fails as not ready, not locked.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_flash_unlock)
 {
 	/* An MT25 board requires nothing of the host, so a request that
@@ -725,6 +845,12 @@ ZTEST(msgqueue, test_msg_type_flash_unlock)
 		      "Write should fail due to flash not ready, not locked");
 }
 
+/**
+ * @brief Unlock is refused without the JEDEC ID variable on a non-MT25 part.
+ * @details Unlocks a GD25LF512MF with no variables and checks the reply names the JEDEC ID
+ * variable. Checks writes stay locked.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_flash_unlock_missing_variables)
 {
 	/* Any other part needs the host to have checked the JEDEC ID */
@@ -739,6 +865,12 @@ ZTEST(msgqueue, test_msg_type_flash_unlock_missing_variables)
 		      "Write should fail due to flash locked");
 }
 
+/**
+ * @brief Unlock succeeds once the JEDEC ID variable is verified.
+ * @details Checks a verified unlock succeeds and a bare unlock rides on it. Checks a lock
+ * withdraws the variables so the next unlock is refused.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_flash_unlock_verified_variables)
 {
 	UpdateTelemetryFlashJedecId(FLASH_JEDEC_ID_GD25LF512MF);
@@ -762,6 +894,11 @@ ZTEST(msgqueue, test_msg_type_flash_unlock_verified_variables)
 	zassert_equal(send_flash_unlock(0, 0), 1, "Locking should withdraw the accepted variables");
 }
 
+/**
+ * @brief Variable words past the stated word count are not read.
+ * @details Sends the JEDEC ID bit with a word count of zero and checks the unlock is refused.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_flash_unlock_word_count)
 {
 	/* Variable words past num_variable_words are not read */
@@ -772,6 +909,12 @@ ZTEST(msgqueue, test_msg_type_flash_unlock_word_count)
 		      "A word count of zero should leave the variables unread");
 }
 
+/**
+ * @brief A tt-flash unlock and luwen-style writes stay open until locked.
+ * @details Runs twice an unlock, bare unlock, two write chunks and a lock. Checks chunks are not
+ * locked out until the lock, and are refused after it.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_flash_unlock_write_sequence)
 {
 	/* The message sequence a real flash produces. tt-flash unlocks with
@@ -804,6 +947,12 @@ ZTEST(msgqueue, test_msg_type_flash_unlock_write_sequence)
 	}
 }
 
+/**
+ * @brief Locking the flash refuses later EEPROM writes.
+ * @details Unlocks an MT25QU512ABB flash, resets the lock and checks a following write fails as
+ * locked.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_flash_lock)
 {
 	UpdateTelemetryFlashJedecId(FLASH_JEDEC_ID_MT25QU512ABB);
@@ -818,6 +967,11 @@ ZTEST(msgqueue, test_msg_type_flash_lock)
 		      "Write should fail due to flash locked");
 }
 
+/**
+ * @brief CONFIRM_FLASHED_SPI succeeds and echoes the challenge.
+ * @details Sends a challenge word and checks the reply is success carrying the same word.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_confirm_flashed_spi)
 {
 	uint32_t challenge_data = 0xDEADBEEF;
@@ -834,6 +988,12 @@ ZTEST(msgqueue, test_msg_type_confirm_flashed_spi)
 	zassert_equal(rsp.data[1], challenge_data, "Challenge data should be echoed back");
 }
 
+/**
+ * @brief SET_LAST_SERIAL sets the serial reported by TEST.
+ * @details Sets a serial and checks TEST reports serial plus one. Repeats with a second serial to
+ * confirm the update takes effect.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_set_last_serial)
 {
 	uint32_t test_serial_number = 0x12345678;
@@ -884,6 +1044,12 @@ ZTEST(msgqueue, test_msg_type_set_last_serial)
 		      "Serial number should be updated to the new value");
 }
 
+/**
+ * @brief SET_WDT_TIMEOUT posts timeout updates and rejects tiny timeouts.
+ * @details Checks 5000 ms and 0 (disable) each post an auto-reset timeout update with that value.
+ * A 1 ms timeout fails with ENOTSUP and posts nothing.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_set_wdt_timeout)
 {
 	/* Clear any pending messages from previous tests */
@@ -946,6 +1112,12 @@ ZTEST(msgqueue, test_msg_type_set_wdt_timeout)
 	zassert_equal(invalid_msg.msg_id, 0, "No message should be posted for invalid timeout");
 }
 
+/**
+ * @brief PING_DM posts a ping to the DMC in read and write forms.
+ * @details Sends a ping with legacy_ping false, then true. Checks each posts a ping message with
+ * the matching data flag and the reply is success.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_ping_dm)
 {
 	/* Clear any pending messages from previous tests */
@@ -1009,6 +1181,12 @@ static uint32_t get_telem_interval(void)
 	return GetTelemetryTag(TAG_UPDATE_TELEM_SPEED);
 }
 
+/**
+ * @brief A valid telemetry interval is accepted and applied.
+ * @details Sets 50 ms, the minimum, then 0 to restore the default. Checks the running interval and
+ * the reported TAG_UPDATE_TELEM_SPEED match each time.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_set_telemetry_interval)
 {
 	/* A value inside the accepted range takes effect and is reported back. */
@@ -1033,6 +1211,12 @@ ZTEST(msgqueue, test_msg_type_set_telemetry_interval)
  * value is 0, which is the restore-default request rather than an out-of-range one.
  */
 #if TELEM_UPDATE_INTERVAL_MIN_MS > 1
+/**
+ * @brief An interval below the minimum is rejected.
+ * @details Sets 200 ms, then one below the minimum. Checks the second request fails and the
+ * interval stays at 200 ms.
+ * @ingroup tests_bh_arc_msgqueue
+ */
 ZTEST(msgqueue, test_msg_type_set_telemetry_interval_invalid)
 {
 	/* Establish a known non-default interval to detect any clobbering below. */

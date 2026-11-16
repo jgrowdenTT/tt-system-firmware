@@ -11,6 +11,11 @@
 /* This test is designed to verify that the driver instance, enabled via an
  * external devicetree overlay, is found and properly initialized by the kernel.
  */
+/**
+ * @brief The fwtable driver is enabled and ready.
+ * @details Checks that the devicetree node exists and that its init succeeded.
+ * @ingroup tests_bh_fwtable
+ */
 ZTEST(bh_fwtable_validation_suite, test_driver_enabled_and_ready)
 {
 	/*

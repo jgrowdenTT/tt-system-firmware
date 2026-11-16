@@ -45,6 +45,12 @@ static uint32_t passed_mask;
 
 #define P_READY 0
 
+/**
+ * @brief The PCIe endpoint device is ready.
+ * @details Checks that the PCIe endpoint device initialised. The SERDES firmware
+ * bundle it needs is staged before kernel init (see stage_bundle.c).
+ * @ingroup tests_pcie
+ */
 ZTEST(tt_pcie, test_endpoint_ready)
 {
 	STEP(T_READY, 1);

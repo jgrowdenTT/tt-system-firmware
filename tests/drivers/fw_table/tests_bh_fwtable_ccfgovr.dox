@@ -1,0 +1,11 @@
+/**
+
+@brief Config overrides
+@defgroup tests_bh_fwtable_ccfgovr Config overrides
+@ingroup tests_bh_fwtable
+@details
+Config overrides read from the boot filesystem. Two banks each hold an override block. The tests check which bank is applied, how sequence numbers choose between banks, and which fields are merged into the firmware table.
+@{
+@}
+
+*/

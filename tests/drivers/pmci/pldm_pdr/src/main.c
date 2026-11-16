@@ -43,6 +43,11 @@ static void before_each(void *f)
 	(void)pldm_pdr_get_chunk(pdr_dev, &req, &resp);
 }
 
+/**
+ * @brief Verify the PDR repository initialises from the DTS provider.
+ * @details Checks the repository built from the DTS provider holds five records (terminus locator, three numeric sensors, one auxiliary-names record) with the expected handle chain, types, sensor IDs, units and the UTF-16BE name "ASIC_TEMP". Also checks an explicit DT base unit overrides the channel-inferred one.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_repo_init_from_dts_provider)
 {
 	const uint16_t expected_numeric_sensor_record_len =
@@ -196,6 +201,11 @@ ZTEST(pldm_pdr_builder, test_repo_init_from_dts_provider)
 	zassert_equal(sensor_pdr.range_field_format, PLDM_RANGE_FIELD_FORMAT_SINT32);
 }
 
+/**
+ * @brief Verify updating TID/EID updates the terminus locator record.
+ * @details Updates TID and EID to 0x33 and 0x44 and checks the terminus locator record carries the new values.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_update_tid_eid_updates_terminus_locator_record)
 {
 	struct pldm_pdr_record_metadata record_meta;
@@ -216,6 +226,11 @@ ZTEST(pldm_pdr_builder, test_update_tid_eid_updates_terminus_locator_record)
 	zassert_equal(tl->terminus_locator_value[0], 0x44U);
 }
 
+/**
+ * @brief Verify updating TID/EID rejects a NULL device.
+ * @details Calls the TID/EID update with a NULL device and checks it returns -EINVAL.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_update_tid_eid_rejects_null_device)
 {
 	int rc;
@@ -224,6 +239,11 @@ ZTEST(pldm_pdr_builder, test_update_tid_eid_rejects_null_device)
 	zassert_equal(rc, -EINVAL);
 }
 
+/**
+ * @brief Verify chunked retrieval returns the first chunk and then the next.
+ * @details Fetches record 1 one byte at a time and checks the first chunk is START with the expected next handles and data transfer handle 1, then that a NEXTPART request succeeds.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_first_and_next)
 {
 	struct pldm_pdr_record_metadata first_record;
@@ -260,6 +280,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_first_and_next)
 	zassert_equal(rc, 0);
 }
 
+/**
+ * @brief Verify chunk retrieval rejects a next-part request in an invalid state.
+ * @details Sends NEXTPART with no transfer active and checks it returns -EBADMSG.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_invalid_next_part_state)
 {
 	struct pldm_pdr_get_chunk_request req = {
@@ -276,6 +301,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_invalid_next_part_state)
 	zassert_equal(rc, -EBADMSG);
 }
 
+/**
+ * @brief Verify repository info retrieval rejects NULL arguments.
+ * @details Checks repository info lookup returns -EINVAL for a NULL device and for a NULL output.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_repository_info_rejects_null_args)
 {
 	struct pldm_pdr_repo_info repo_info;
@@ -288,6 +318,11 @@ ZTEST(pldm_pdr_builder, test_get_repository_info_rejects_null_args)
 	zassert_equal(rc, -EINVAL);
 }
 
+/**
+ * @brief Verify record lookup by index rejects NULL arguments.
+ * @details Checks record lookup by index returns -EINVAL for a NULL device and for a NULL output.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_record_at_index_rejects_null_args)
 {
 	struct pldm_pdr_record_metadata meta;
@@ -300,6 +335,11 @@ ZTEST(pldm_pdr_builder, test_get_record_at_index_rejects_null_args)
 	zassert_equal(rc, -EINVAL);
 }
 
+/**
+ * @brief Verify record lookup by index rejects out-of-range indices.
+ * @details Checks record lookup at an index equal to the record count returns -ERANGE.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_record_at_index_out_of_range)
 {
 	struct pldm_pdr_repo_info repo_info;
@@ -313,6 +353,11 @@ ZTEST(pldm_pdr_builder, test_get_record_at_index_out_of_range)
 	zassert_equal(rc, -ERANGE);
 }
 
+/**
+ * @brief Verify finding a record index returns the index of a present record.
+ * @details Checks handles 1 through 5 map to indices 0 through 4.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_find_record_index_found)
 {
 	uint32_t idx;
@@ -326,6 +371,11 @@ ZTEST(pldm_pdr_builder, test_find_record_index_found)
 	}
 }
 
+/**
+ * @brief Verify finding a record index reports absent records.
+ * @details Checks an unknown record handle (999) returns -ENOENT.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_find_record_index_not_found)
 {
 	uint32_t idx;
@@ -335,6 +385,11 @@ ZTEST(pldm_pdr_builder, test_find_record_index_not_found)
 	zassert_equal(rc, -ENOENT);
 }
 
+/**
+ * @brief Verify numeric sensor lookup by sensor ID.
+ * @details Checks sensor IDs 101, 202 and 303 are found, and that an unknown ID and a NULL device both return NULL.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_find_numeric_sensor_by_id)
 {
 	const struct pldm_pdr_numeric_sensor_desc *desc;
@@ -358,6 +413,11 @@ ZTEST(pldm_pdr_builder, test_find_numeric_sensor_by_id)
 	zassert_is_null(desc);
 }
 
+/**
+ * @brief Verify a record retrieved in a single transfer is returned complete.
+ * @details Requests record 1 with maximum sizes and checks it comes back as START_AND_END in one piece, with a CRC8 matching the record data.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_complete_single_transfer)
 {
 	struct pldm_pdr_record_metadata rec;
@@ -383,6 +443,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_complete_single_transfer)
 	zassert_equal(resp.transfer_crc, pldm_edac_crc8(rec.record_data, rec.record_len));
 }
 
+/**
+ * @brief Verify chunk retrieval by record handle.
+ * @details Requests record handle 3 directly and checks it comes back in one piece with the expected next record handle.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_by_record_handle)
 {
 	struct pldm_pdr_record_metadata rec;
@@ -407,6 +472,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_by_record_handle)
 	zassert_equal(resp.record_data, rec.record_data);
 }
 
+/**
+ * @brief Verify chunk retrieval rejects an unknown record handle.
+ * @details Requests record handle 999 and checks it returns -ENOENT.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_unknown_record_handle)
 {
 	struct pldm_pdr_get_chunk_request req = {
@@ -423,6 +493,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_unknown_record_handle)
 	zassert_equal(rc, -ENOENT);
 }
 
+/**
+ * @brief Verify chunk retrieval rejects an unsupported operation flag.
+ * @details Sends transfer operation flag 0xFF and checks it returns -EOPNOTSUPP.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_unsupported_op_flag)
 {
 	struct pldm_pdr_get_chunk_request req = {
@@ -439,6 +514,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_unsupported_op_flag)
 	zassert_equal(rc, -EOPNOTSUPP);
 }
 
+/**
+ * @brief Verify chunk retrieval rejects invalid arguments.
+ * @details Checks NULL device, request and response pointers, and a zero request count, each return -EINVAL.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_invalid_args)
 {
 	struct pldm_pdr_get_chunk_request req = {
@@ -465,6 +545,11 @@ ZTEST(pldm_pdr_builder, test_get_chunk_invalid_args)
 	zassert_equal(rc, -EINVAL);
 }
 
+/**
+ * @brief Verify a next-part request with stale handles is rejected.
+ * @details Starts a one-byte transfer, then sends NEXTPART with a wrong record handle and then a wrong data transfer handle, checking both return -EBADMSG.
+ * @ingroup tests_pldm_pdr_builder
+ */
 ZTEST(pldm_pdr_builder, test_get_chunk_nextpart_stale_handles)
 {
 	struct pldm_pdr_get_chunk_request req;

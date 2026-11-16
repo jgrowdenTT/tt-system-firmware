@@ -20,6 +20,12 @@ const struct device *gpio_emul = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 static const struct gpio_dt_spec board_fault_led =
 	GPIO_DT_SPEC_GET(DT_PATH(board_fault_led), gpios);
 
+/**
+ * @brief Checks PGOOD fall and rise handling for the chip.
+ * @details Drives the emulated PGOOD input low and high and asserts that falls and rises are
+ * detected. A repeated fall must enter the severe fault state.
+ * @ingroup tests_pgood
+ */
 ZTEST(pgood, test_pgood)
 {
 	/* Start with PGOOD high */

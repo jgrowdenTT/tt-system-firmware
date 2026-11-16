@@ -1,0 +1,12 @@
+/**
+
+@brief JTAG boot ROM tests
+@defgroup tests_jtag_bootrom JTAG boot ROM
+@ingroup all_tests
+@details
+Loading the boot ROM patch into a chip over JTAG. The tests cover initialization, writing the patch
+and verifying it.
+@{
+@}
+
+*/
