@@ -10,6 +10,12 @@
 
 extern uint32_t fan_curve(float max_asic_temp, float max_gddr_temp);
 
+/**
+ * @brief Fan speed follows the ASIC temperature when GDDR is cool.
+ * @details Sweeps the ASIC temperature with GDDR held at 25. Checks the fan percentage at each
+ * step, reaching 100 by 90.
+ * @ingroup tests_bh_arc_fan
+ */
 ZTEST(fan_ctrl, test_fan_curve_asic_temp)
 {
 	/* Sweep the ASIC temperature while holding GDDR temp low */
@@ -30,6 +36,12 @@ ZTEST(fan_ctrl, test_fan_curve_asic_temp)
 	zassert_equal(fan_curve(95, 25), 100);
 }
 
+/**
+ * @brief Fan speed follows the GDDR temperature when ASIC is cool.
+ * @details Sweeps the GDDR temperature upward with ASIC held at 25. Checks the fan percentage at
+ * each step, with rises applied at once.
+ * @ingroup tests_bh_arc_fan
+ */
 ZTEST(fan_ctrl, test_fan_curve_gddr_temp)
 {
 	/* Sweep the GDDR temperature upward while holding ASIC temp low */
@@ -51,6 +63,12 @@ ZTEST(fan_ctrl, test_fan_curve_gddr_temp)
 	zassert_equal(fan_curve(25, 95), 100);
 }
 
+/**
+ * @brief Fan speed ignores small GDDR drops below the tracked value.
+ * @details Lowers GDDR in small steps and checks the speed holds until a 5-degree drop
+ * accumulates. Checks a later rise is followed at once.
+ * @ingroup tests_bh_arc_fan
+ */
 ZTEST(fan_ctrl, test_fan_curve_gddr_hysteresis)
 {
 	/* Prime the effective temp to a known peak */
@@ -68,6 +86,12 @@ ZTEST(fan_ctrl, test_fan_curve_gddr_hysteresis)
 	zassert_equal(fan_curve(25, 80), 94);
 }
 
+/**
+ * @brief Fan speed stays between 0 and 100 percent for extreme inputs.
+ * @details Calls the curve with infinities, negative, zero and large temperatures for both inputs
+ * and checks each result is in range.
+ * @ingroup tests_bh_arc_fan
+ */
 ZTEST(fan_ctrl, test_fan_curve_bounds)
 {
 	/* Test boundary conditions */

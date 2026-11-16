@@ -146,6 +146,11 @@ static void *suite_setup(void)
  * when protoc is missing), so a not-ready device here is a real bh_fwtable
  * init/load regression and must FAIL — never skip.
  */
+/**
+ * @brief The fwtable device is ready after init.
+ * @details Fails, rather than skips, when the device did not load.
+ * @ingroup tests_bh_fwtable
+ */
 ZTEST(bh_fwtable_sim, test_0_device_ready)
 {
 	zassert_true(device_is_ready(FWTABLE_DEV),
@@ -153,12 +158,23 @@ ZTEST(bh_fwtable_sim, test_0_device_ready)
 		     "failed; check the driver's -EIO/-ENOMEM/-EINVAL load paths.");
 }
 
+/**
+ * @brief The chip type is extracted from the extended board ID.
+ * @details Checks the extraction macro against the documented format.
+ * @ingroup tests_bh_fwtable
+ */
 ZTEST(bh_fwtable_sim, test_extended_board_id_extraction)
 {
 	zassert_equal(BOARDTYPE_FROM_EXTENDED_BOARD_ID(0x0100, 0x0781DC0F26410001), 0x00078,
 		      "extended board type extraction does not match the documented format");
 }
 
+/**
+ * @brief The read-only table loads with the expected vendor and board ID.
+ * @details Compares against the expected values for the chip type. A legacy chip must
+ * not report a high board ID.
+ * @ingroup tests_bh_fwtable
+ */
 ZTEST(bh_fwtable_sim, test_read_only_loaded)
 {
 	zassert_not_null(expected, "no expected-values table for this board; "
@@ -180,6 +196,12 @@ ZTEST(bh_fwtable_sim, test_read_only_loaded)
 	TC_PRINT("[%s] vendor_id = 0x%x\n", expected->name, ro->vendor_id);
 }
 
+/**
+ * @brief The firmware table loads with the expected chip limits.
+ * @details Checks the ASIC frequency range, the voltage range and the TDP limit against
+ * the expected values for the chip type.
+ * @ingroup tests_bh_fwtable
+ */
 ZTEST(bh_fwtable_sim, test_fw_table_loaded)
 {
 	zassert_not_null(expected, "no expected-values table for this board; "
@@ -209,6 +231,12 @@ ZTEST(bh_fwtable_sim, test_fw_table_loaded)
 	TC_PRINT("[%s] fw_bundle_version = 0x%x\n", expected->name, fw->fw_bundle_version);
 }
 
+/**
+ * @brief The flash info table loads.
+ * @details Checks that the table pointer is valid. The reprogram count and flash version
+ * are printed to the log.
+ * @ingroup tests_bh_fwtable
+ */
 ZTEST(bh_fwtable_sim, test_flash_info_loaded)
 {
 	const struct _FlashInfoTable *fi = tt_bh_fwtable_get_flash_info_table(FWTABLE_DEV);

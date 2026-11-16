@@ -1,0 +1,11 @@
+/**
+
+@brief RPMI common
+@defgroup tests_rpmi RPMI common
+@ingroup all_tests
+@details
+The RPMI common library. No check exercises it yet; the suite is a placeholder that confirms the library builds and runs.
+@{
+@}
+
+*/

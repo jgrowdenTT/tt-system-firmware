@@ -144,6 +144,11 @@ static void before_each(void *fixture)
 
 ZTEST_SUITE(gddr_cal, NULL, NULL, before_each, NULL, NULL);
 
+/**
+ * @brief Two erased banks yield no calibration table.
+ * @details Checks gddr_cal_read() returns -ENOENT when both banks are erased.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_both_banks_erased_no_table)
 {
 	gddr_cal_table_t table;
@@ -152,6 +157,11 @@ ZTEST(gddr_cal, test_both_banks_erased_no_table)
 	zassert_equal(gddr_cal_read(&table), -ENOENT);
 }
 
+/**
+ * @brief A written calibration table reads back unchanged.
+ * @details Writes a filled table, reads it back and checks the contents match.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_write_then_read_round_trip)
 {
 	gddr_cal_table_t written;
@@ -166,6 +176,11 @@ ZTEST(gddr_cal, test_write_then_read_round_trip)
 			  "table did not survive the round trip");
 }
 
+/**
+ * @brief The first write goes to bank A with sequence 0.
+ * @details Writes once, then checks bank A is valid with sequence 0 and bank B is still erased.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_first_write_lands_in_bank_a)
 {
 	gddr_cal_table_t table;
@@ -179,6 +194,12 @@ ZTEST(gddr_cal, test_first_write_lands_in_bank_a)
 	zassert_false(raw_bank_is_valid(1, NULL), "bank B should still be erased");
 }
 
+/**
+ * @brief Writes alternate banks with increasing sequence numbers.
+ * @details Writes three tables and checks bank A holds sequence 2 and bank B sequence 1. Checks
+ * the read returns the newest table.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_writes_alternate_banks_and_bump_seq)
 {
 	gddr_cal_table_t table;
@@ -209,6 +230,11 @@ ZTEST(gddr_cal, test_writes_alternate_banks_and_bump_seq)
  * An update must never put the live table at risk. After a second write, the
  * bank holding the first write is still a complete, independently valid record.
  */
+/**
+ * @brief A second write leaves the previous bank valid.
+ * @details Writes twice and checks both banks remain valid with different sequence numbers.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_active_bank_is_never_erased)
 {
 	gddr_cal_table_t first;
@@ -229,6 +255,12 @@ ZTEST(gddr_cal, test_active_bank_is_never_erased)
 	zassert_not_equal(seq_a, seq_b, "banks must not share a sequence number");
 }
 
+/**
+ * @brief The bank with the higher sequence number is returned.
+ * @details Places the newer table in bank B, then in bank A, and checks each time that the read
+ * returns it.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_newer_seq_wins)
 {
 	gddr_cal_table_t older;
@@ -251,6 +283,12 @@ ZTEST(gddr_cal, test_newer_seq_wins)
 	zassert_mem_equal(&got, &newer, sizeof(newer), "bank A (seq 9) should win");
 }
 
+/**
+ * @brief Sequence comparison handles wraparound.
+ * @details Places sequence 0xfffffffe in bank A and sequence 0 in bank B. Checks the read returns
+ * bank B, which is newer.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_seq_comparison_is_wrap_safe)
 {
 	gddr_cal_table_t older;
@@ -268,6 +306,12 @@ ZTEST(gddr_cal, test_seq_comparison_is_wrap_safe)
 	zassert_mem_equal(&got, &newer, sizeof(newer), "seq 0 should be newer than 0xfffffffe");
 }
 
+/**
+ * @brief A newer bank with a bad checksum is ignored.
+ * @details Places a valid older bank and a newer bank with a bad checksum. Checks the read returns
+ * the older table.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_corrupt_newest_falls_back_to_older)
 {
 	gddr_cal_table_t good;
@@ -288,6 +332,12 @@ ZTEST(gddr_cal, test_corrupt_newest_falls_back_to_older)
 /*
  * Simulate losing power partway through an update: the target bank has been
  * erased and its body written, but the header never landed.
+ */
+/**
+ * @brief A write interrupted before its header is ignored.
+ * @details Writes a valid bank A, then writes only the body of bank B. Checks the read returns
+ * bank A's table.
+ * @ingroup tests_bh_arc_gddr_cal
  */
 ZTEST(gddr_cal, test_interrupted_write_falls_back_to_older)
 {
@@ -311,6 +361,12 @@ ZTEST(gddr_cal, test_interrupted_write_falls_back_to_older)
 	zassert_mem_equal(&got, &good, sizeof(good), "torn bank must not be used");
 }
 
+/**
+ * @brief A bank with the erased sequence value is never used.
+ * @details Writes a bank with sequence 0xffffffff and a valid checksum. Checks the read fails with
+ * -ENOENT.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_erased_seq_is_rejected)
 {
 	gddr_cal_table_t table;
@@ -323,6 +379,12 @@ ZTEST(gddr_cal, test_erased_seq_is_rejected)
 	zassert_equal(gddr_cal_read(&got), -ENOENT, "seq 0xffffffff must be rejected");
 }
 
+/**
+ * @brief Banks with a different table version are rejected.
+ * @details Writes banks one version below and one above the current version. Checks the read fails
+ * with -ENOENT.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_wrong_version_is_rejected)
 {
 	gddr_cal_table_t table;
@@ -337,6 +399,11 @@ ZTEST(gddr_cal, test_wrong_version_is_rejected)
 	zassert_equal(gddr_cal_read(&got), -ENOENT, "foreign versions must be rejected");
 }
 
+/**
+ * @brief Two banks with bad checksums yield no table.
+ * @details Writes both banks with bad checksums and checks the read fails with -ENOENT.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_both_banks_corrupt_no_table)
 {
 	gddr_cal_table_t table;
@@ -351,6 +418,12 @@ ZTEST(gddr_cal, test_both_banks_corrupt_no_table)
 }
 
 /* A failed read must not leave stale bank state behind: the next write starts over. */
+/**
+ * @brief A write after a failed read starts at bank A.
+ * @details Fails a read on two corrupt banks, writes a table, and checks it lands in bank A with
+ * sequence 0.
+ * @ingroup tests_bh_arc_gddr_cal
+ */
 ZTEST(gddr_cal, test_write_after_failed_read_starts_at_bank_a)
 {
 	gddr_cal_table_t table;

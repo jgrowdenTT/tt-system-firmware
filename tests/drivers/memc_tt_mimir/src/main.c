@@ -14,9 +14,11 @@
 
 #define MEMC_NODE DT_NODELABEL(memc)
 
-/*
- * The controller device must have come up: device_is_ready() is false if
- * gddr_init() (device init) or an earlier POST_KERNEL SYS_INIT failed.
+/**
+ * @brief The memory controller comes up.
+ * @details Checks that the controller device is ready. Readiness covers the whole GDDR
+ * bring-up, so a failure means that bring-up failed.
+ * @ingroup tests_memc
  */
 ZTEST(memc_tt_mimir, test_bringup)
 {

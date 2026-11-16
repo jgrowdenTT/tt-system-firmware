@@ -1,0 +1,14 @@
+/**
+
+@brief Blackhole FW table tests
+@defgroup tests_bh_fwtable bh_fwtable
+@ingroup all_tests
+@details
+The bh_fwtable driver loads the firmware tables that describe a Blackhole chip: the
+read-only table, the firmware table with the chip limits, and the flash info table.
+The tests check that each table loads, and that it holds the values expected for the
+chip type.
+@{
+@}
+
+*/

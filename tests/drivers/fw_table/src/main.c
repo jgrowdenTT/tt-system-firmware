@@ -251,7 +251,10 @@ static void before_each(void *fixture)
 ZTEST_SUITE(bh_fwtable_ccfgovr, NULL, suite_setup, before_each, NULL, NULL);
 
 /**
- * @brief Test good path when ccfgovr is valid and successfully applied
+ * @brief A valid override in the active bank is applied.
+ * @details Sets tdp_limit. Fields the override leaves out keep their config value, and the
+ * bank state and sequence number are reported.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_happy_path_active_bank_applies)
 {
@@ -273,7 +276,9 @@ ZTEST(bh_fwtable_ccfgovr, test_happy_path_active_bank_applies)
 }
 
 /**
- * @brief Test that max_tdp_limit can be overridden independently of tdp_limit
+ * @brief max_tdp_limit can be overridden on its own.
+ * @details Checks that setting max_tdp_limit leaves tdp_limit unchanged.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_max_tdp_limit_override_applies)
 {
@@ -291,7 +296,9 @@ ZTEST(bh_fwtable_ccfgovr, test_max_tdp_limit_override_applies)
 }
 
 /**
- * @brief Test that the kernel-throttler-at-floor configuration can be overridden
+ * @brief The kernel throttler floor setting can be overridden.
+ * @details Enables kernel_throttler_at_floor_en and sets the stop frequency.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_kernel_throttler_override_applies)
 {
@@ -311,7 +318,9 @@ ZTEST(bh_fwtable_ccfgovr, test_kernel_throttler_override_applies)
 }
 
 /**
- * @brief Test that the GDDR thermal-trip action feature can be overridden
+ * @brief The GDDR thermal-trip setting can be overridden.
+ * @details Enables gddr_therm_trip_en.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_gddr_therm_trip_override_applies)
 {
@@ -327,7 +336,9 @@ ZTEST(bh_fwtable_ccfgovr, test_gddr_therm_trip_override_applies)
 }
 
 /**
- * @brief Test that the ETH training speed can be raised above the cmfwcfg value
+ * @brief The Ethernet training speed can be raised above its config value.
+ * @details Sets eth_speed_override to 400.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_eth_speed_override_applies)
 {
@@ -344,11 +355,10 @@ ZTEST(bh_fwtable_ccfgovr, test_eth_speed_override_applies)
 }
 
 /**
- * @brief Test that a speed of 0 overrides the cmfwcfg speed and asks for auto-train
- *
- * Both the override and the base fw table are `optional`, so an explicit 0
- * survives the merge with `has_eth_speed_override` set. `LoadEthFwCfg` writes
- * 0 into the ETH FW config, which hands the speed choice back to ERISC.
+ * @brief An Ethernet speed of 0 is applied and requests auto-training.
+ * @details The explicit zero survives the merge, so the speed choice goes back to the
+ * Ethernet firmware.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_eth_speed_override_of_zero_asks_for_auto_train)
 {
@@ -368,9 +378,9 @@ ZTEST(bh_fwtable_ccfgovr, test_eth_speed_override_of_zero_asks_for_auto_train)
 }
 
 /**
- * @brief Test that pci0 max_pcie_speed can be capped at Gen 4
- *
- * pci1 must keep its cmfwcfg value: the two instances are independent.
+ * @brief The PCIe 0 speed cap can be set.
+ * @details Caps pci0 at Gen 4, and checks that pci1 keeps its config value.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_pci0_max_pcie_speed_override_applies)
 {
@@ -389,9 +399,9 @@ ZTEST(bh_fwtable_ccfgovr, test_pci0_max_pcie_speed_override_applies)
 }
 
 /**
- * @brief Test that pci1 max_pcie_speed can be set to Gen 5
- *
- * pci0 must keep its cmfwcfg value.
+ * @brief The PCIe 1 speed cap can be set.
+ * @details Sets pci1 to Gen 5, and checks that pci0 keeps its config value.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_pci1_max_pcie_speed_override_applies)
 {
@@ -410,7 +420,9 @@ ZTEST(bh_fwtable_ccfgovr, test_pci1_max_pcie_speed_override_applies)
 }
 
 /**
- * @brief Test good path when ccfgovrb is newer than ccfgovra
+ * @brief The bank with the newer sequence number is applied.
+ * @details Bank B (sequence 2) overrides bank A (sequence 1).
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_newer_seq_in_bank_b_wins)
 {
@@ -435,7 +447,9 @@ ZTEST(bh_fwtable_ccfgovr, test_newer_seq_in_bank_b_wins)
 }
 
 /**
- * @brief Test bad path when protobuf decode fails on the body
+ * @brief An override body that does not decode is rejected.
+ * @details The override is not applied, and the bank state is reported as rejected.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_protobuf_decode_fails)
 {
@@ -453,7 +467,10 @@ ZTEST(bh_fwtable_ccfgovr, test_protobuf_decode_fails)
 }
 
 /**
- * @brief Test bad path when protobuf decode fails on the body
+ * @brief An override body with a bad checksum is not applied.
+ * @details The header checksum does not match the body, so tdp_limit keeps its config
+ * value.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_body_crc_mismatch)
 {
@@ -474,7 +491,10 @@ ZTEST(bh_fwtable_ccfgovr, test_body_crc_mismatch)
 }
 
 /**
- * @brief Test bad path when ccfgovra is invalid and ccfgovrb is valid
+ * @brief An invalid active bank falls back to the other bank.
+ * @details Bank A has a bad checksum, so bank B's override applies and bank A is reported
+ * as rejected.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_active_invalid_falls_back_to_inactive)
 {
@@ -505,7 +525,9 @@ ZTEST(bh_fwtable_ccfgovr, test_active_invalid_falls_back_to_inactive)
 }
 
 /**
- * @brief Test bad path when both tables are invalid
+ * @brief No override is applied when both banks are invalid.
+ * @details The state is reported as rejected and the sequence number is zero.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_both_banks_invalid_no_override)
 {
@@ -533,9 +555,9 @@ ZTEST(bh_fwtable_ccfgovr, test_both_banks_invalid_no_override)
 }
 
 /**
- * @brief Test that a newer empty bank clears an older bank's override
- *
- * This is what `bh-mod res --all` writes.
+ * @brief A newer empty bank clears an older override.
+ * @details This is the state left by clearing all overrides.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_newer_empty_bank_clears_older_override)
 {
@@ -556,10 +578,10 @@ ZTEST(bh_fwtable_ccfgovr, test_newer_empty_bank_clears_older_override)
 }
 
 /**
- * @brief Test that a corrupt newer empty bank resurrects the older override
- *
- * Clearing with `bh-mod res --all` does not erase the previous override; it
- * stays in the other bank and comes back if the empty bank is lost.
+ * @brief A corrupt empty bank brings back the older override.
+ * @details The newer bank is empty but fails its checksum, so the older override applies
+ * again. Clearing does not erase the older override.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_corrupt_empty_bank_resurrects_older_override)
 {
@@ -579,7 +601,9 @@ ZTEST(bh_fwtable_ccfgovr, test_corrupt_empty_bank_resurrects_older_override)
 }
 
 /**
- * @brief Test that equal sequence numbers resolve to bank A
+ * @brief Equal sequence numbers prefer bank A.
+ * @details Both banks have sequence 3, and bank A's override applies.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_equal_seq_prefers_bank_a)
 {
@@ -602,9 +626,9 @@ ZTEST(bh_fwtable_ccfgovr, test_equal_seq_prefers_bank_a)
 }
 
 /**
- * @brief Test that sequence comparison survives wrap-around
- *
- * 0 follows 0xFFFFFFFE because 0xFFFFFFFF is reserved for an erased bank.
+ * @brief Sequence numbers compare correctly across wraparound.
+ * @details Sequence 0 is newer than 0xFFFFFFFE, because 0xFFFFFFFF marks an erased bank.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_seq_wraparound_newer_wins)
 {
@@ -629,7 +653,10 @@ ZTEST(bh_fwtable_ccfgovr, test_seq_wraparound_newer_wins)
 }
 
 /**
- * @brief Test that implausible headers are rejected before the body is read
+ * @brief Headers that cannot be valid are rejected before the body is read.
+ * @details Covers a wrong magic, an erased sequence number, an unknown version, an
+ * unaligned length and an oversized length.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_implausible_headers_rejected)
 {
@@ -672,7 +699,9 @@ ZTEST(bh_fwtable_ccfgovr, test_implausible_headers_rejected)
 }
 
 /**
- * @brief Test that the dram_table soft-harvest mask can be overridden
+ * @brief The soft-harvest DRAM mask can be overridden.
+ * @details Sets the mask, and checks that the merge marks dram_table as present.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_soft_harvest_dram_mask_override_applies)
 {
@@ -696,7 +725,9 @@ ZTEST(bh_fwtable_ccfgovr, test_soft_harvest_dram_mask_override_applies)
 }
 
 /**
- * @brief Test that cable fault detection can be bypassed
+ * @brief Cable fault detection can be bypassed.
+ * @details Sets bypass_cable_fault_detection.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_bypass_cable_fault_override_applies)
 {
@@ -718,10 +749,9 @@ ZTEST(bh_fwtable_ccfgovr, test_bypass_cable_fault_override_applies)
 }
 
 /**
- * @brief Test that a reserved field cannot forge the bundle version
- *
- * FwTableOverride reserves field 1 (FwTable.fw_bundle_version). The decoder
- * must skip it and still apply the fields that follow.
+ * @brief A reserved field cannot set the bundle version.
+ * @details Field 1 is skipped, and the chip limit that follows it still applies.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_reserved_bundle_version_field_ignored)
 {
@@ -769,11 +799,10 @@ static void set_every_leaf(FwTableOverride *ovr)
 }
 
 /**
- * @brief Test that every field in fw_table_override.proto is merged
- *
- * Field numbers in FwTableOverride match FwTable, so each override leaf can
- * be found in FwTable by tag. A field added to the proto without a merge
- * branch in tt_bh_fwtable_apply_ccfgovr() fails here.
+ * @brief Every field in the override proto is merged into the firmware table.
+ * @details Sets every leaf field, applies the override, and checks that each value reached
+ * the firmware table. A new field with no merge branch fails here.
+ * @ingroup tests_bh_fwtable_ccfgovr
  */
 ZTEST(bh_fwtable_ccfgovr, test_every_override_field_is_merged)
 {

@@ -23,6 +23,15 @@ uint8_t remote_smc_bin[] = {
 };
 const unsigned int remote_smc_bin_len = sizeof(remote_smc_bin);
 
+/**
+ * @brief Load and boot the secondary SMC image on the remote chiplet.
+ * @details
+ * Loads the embedded secondary BL1 image into the remote SMC's SRAM scratch region
+ * through the remoteproc driver, then boots it. Both steps must succeed. The overall
+ * result comes from the secondary image: once it reaches main() it prints.
+ * The line it prints much match the console harness to pass the test.
+ * @ingroup tests_remoteproc
+ */
 ZTEST(tt_smc_remoteproc, test_boot)
 {
 	int ret;

@@ -1,0 +1,11 @@
+/**
+
+@brief Flash performance
+@defgroup tests_flash_perf Flash performance
+@ingroup all_tests
+@details
+Read and program times of the flash driver, checked against expected limits. A time over the limit points to a regression in the driver.
+@{
+@}
+
+*/

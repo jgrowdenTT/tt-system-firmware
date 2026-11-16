@@ -1,0 +1,56 @@
+/**
+
+@brief Platform Level Data Model tests
+@defgroup tests_pldm PLDM
+@ingroup all_tests
+@details
+PLDM (Platform Level Data Model) is the DMTF management protocol the PMCI firmware uses
+to expose platform descriptor records, sensor readings and vendor-specific commands.
+The tests in this area cover the firmware's PLDM implementation, split by the part of
+the protocol under test.
+@{
+@}
+
+@defgroup tests_pldm_mctp_transport PLDM MCTP transport
+@ingroup tests_pldm
+@details
+PLDM carried over MCTP to the DMC firmware, exercised end to end. This covers the base,
+platform and OEM message types as they arrive over the wire, and the DMC's responses to
+them.
+@{
+@}
+
+@defgroup tests_pldm_pdr_builder PLDM PDR builder
+@ingroup tests_pldm
+@details
+Construction of the platform descriptor record repository from devicetree, and access to
+the records in it by index, by record handle and by sensor ID. Chunked retrieval of
+records is part of this scope.
+@{
+@}
+
+@defgroup tests_pldm_platform PLDM platform
+@ingroup tests_pldm
+@details
+The platform command set: repository information, descriptor record retrieval, sensor
+readings, and discovery of platform versions and supported commands.
+@{
+@}
+
+@defgroup tests_pldm_oem PLDM OEM
+@ingroup tests_pldm
+@details
+Tenstorrent's vendor-specific PLDM type (0x3F), which provides a remote shell over PLDM:
+starting a command, collecting its output, and cancelling it.
+@{
+@}
+
+@defgroup tests_pldm_base PLDM base
+@ingroup tests_pldm
+@details
+The base command set that every PLDM responder implements: terminus ID, supported types,
+supported commands and versions.
+@{
+@}
+
+*/

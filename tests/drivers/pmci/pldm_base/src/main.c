@@ -41,6 +41,11 @@ static void assert_response_header(const struct pldm_msg *resp_msg, uint8_t inst
 	zassert_equal(hdr.command, command);
 }
 
+/**
+ * @brief Verify GetTID returns the terminus ID on success.
+ * @details Builds a GetTID response for TID 0x2A and checks the completion code and returned TID match.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_tid_success)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_TID_REQ_BYTES);
@@ -72,6 +77,11 @@ ZTEST(pldm_base, test_get_tid_success)
 	zassert_equal(resp_tid, tid);
 }
 
+/**
+ * @brief Verify SetTID sets the terminus ID on success.
+ * @details Builds a SetTID response for TID 0x3C and checks the stored TID is updated and the response succeeds.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_set_tid_success)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_SET_TID_REQ_BYTES);
@@ -98,6 +108,11 @@ ZTEST(pldm_base, test_set_tid_success)
 	zassert_equal(resp_msg->payload[0], PLDM_SUCCESS);
 }
 
+/**
+ * @brief Verify SetTID rejects a reserved TID.
+ * @details Sends SetTID with reserved TID 0x00 and checks it returns INVALID_DATA and the stored TID is unchanged.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_set_tid_rejects_reserved_tid)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_SET_TID_REQ_BYTES);
@@ -124,6 +139,11 @@ ZTEST(pldm_base, test_set_tid_rejects_reserved_tid)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_DATA);
 }
 
+/**
+ * @brief Verify SetTID rejects an invalid length.
+ * @details Sends SetTID with no payload and checks it returns INVALID_LENGTH and the stored TID is unchanged.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_set_tid_rejects_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_SET_TID_REQ_BYTES);
@@ -148,6 +168,11 @@ ZTEST(pldm_base, test_set_tid_rejects_invalid_length)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify GetPLDMCommands returns the base command set.
+ * @details Builds a GetPLDMCommands response for the base type and checks GetTID, SetTID, GetPLDMVersion, GetPLDMTypes and GetPLDMCommands are supported.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_commands_base)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_COMMANDS_REQ_BYTES);
@@ -183,6 +208,11 @@ ZTEST(pldm_base, test_get_commands_base)
 	zassert_true((commands[0].byte & BIT(PLDM_GET_PLDM_COMMANDS)) != 0U);
 }
 
+/**
+ * @brief Verify GetPLDMCommands rejects an invalid type.
+ * @details Asks for commands of the SMBIOS type, which this handler does not implement, and checks it returns the invalid-type-in-request-data error.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_commands_rejects_invalid_type)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_COMMANDS_REQ_BYTES);
@@ -209,6 +239,11 @@ ZTEST(pldm_base, test_get_commands_rejects_invalid_type)
 		      PLDM_GET_PLDM_COMMANDS_INVALID_PLDM_TYPE_IN_REQUEST_DATA);
 }
 
+/**
+ * @brief Verify GetPLDMTypes returns the base types on success.
+ * @details Builds a GetPLDMTypes response and checks the base type bit is set.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_types_base_success)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_TYPES_REQ_BYTES);
@@ -240,6 +275,11 @@ ZTEST(pldm_base, test_get_types_base_success)
 	zassert_true((types_resp.pldm_types[PLDM_BASE / 8].byte & BIT(PLDM_BASE % 8)) != 0U);
 }
 
+/**
+ * @brief Verify GetPLDMTypes rejects an invalid length.
+ * @details Sends GetPLDMTypes with a one-byte payload and checks it returns INVALID_LENGTH.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_types_rejects_invalid_length)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_TYPES_REQ_BYTES);
@@ -263,6 +303,11 @@ ZTEST(pldm_base, test_get_types_rejects_invalid_length)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_INVALID_LENGTH);
 }
 
+/**
+ * @brief Verify an unsupported base command returns an error.
+ * @details Builds a response for undefined base command 0xFF and checks it returns UNSUPPORTED_PLDM_CMD.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_unsupported_command_returns_error)
 {
 	PLDM_MSG_BUFFER(req_buf, 0U);
@@ -287,6 +332,11 @@ ZTEST(pldm_base, test_unsupported_command_returns_error)
 	zassert_equal(resp_msg->payload[0], PLDM_ERROR_UNSUPPORTED_PLDM_CMD);
 }
 
+/**
+ * @brief Verify GetPLDMVersion rejects the next-part flag.
+ * @details Sends GetPLDMVersion with the NEXTPART operation flag and checks it returns the invalid transfer operation flag error.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_version_rejects_nextpart_flag)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_VERSION_REQ_BYTES);
@@ -311,6 +361,11 @@ ZTEST(pldm_base, test_get_version_rejects_nextpart_flag)
 	zassert_equal(resp_msg->payload[0], PLDM_GET_PLDM_VERSION_INVALID_TRANSFER_OPERATION_FLAG);
 }
 
+/**
+ * @brief Verify GetPLDMVersion returns the base version on success.
+ * @details Builds a GetPLDMVersion response for the base type and checks a 14-byte payload, success, transfer handle 0 and START_AND_END.
+ * @ingroup tests_pldm_base
+ */
 ZTEST(pldm_base, test_get_version_base_success)
 {
 	PLDM_MSG_BUFFER(req_buf, PLDM_GET_VERSION_REQ_BYTES);

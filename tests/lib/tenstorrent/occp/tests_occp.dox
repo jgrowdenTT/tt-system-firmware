@@ -1,0 +1,12 @@
+/**
+
+@brief OCCP tests
+@defgroup tests_occp OCCP
+@ingroup all_tests
+@details
+The OCCP interface, which gives access to the remote SMC over an I3C bus. The tests cover protocol
+version reporting and data transfers to SMC memory.
+@{
+@}
+
+*/

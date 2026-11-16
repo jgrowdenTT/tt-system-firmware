@@ -20,6 +20,12 @@ static void wdt_callback(const struct device *wdt_dev, int channel_id)
 	k_sem_give(&wdog_sem);
 }
 
+/**
+ * @brief The watchdog callback fires within its timeout.
+ * @details Installs a timeout, starts the watchdog, and waits up to 100 ms for the
+ * callback, which feeds the watchdog.
+ * @ingroup tests_watchdog
+ */
 ZTEST(wdog, test_cb)
 {
 	int ret;

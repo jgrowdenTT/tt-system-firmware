@@ -53,6 +53,11 @@ bool occp_before(const void *unused)
 	return true;
 }
 
+/**
+ * @brief Checks the OCCP protocol version reported by the remote SMC.
+ * @details Reads the version through the I3C backend and asserts it is 1.0.0.
+ * @ingroup tests_occp
+ */
 ZTEST(occp, test_version)
 {
 	uint8_t major, minor, patch;
@@ -65,6 +70,12 @@ ZTEST(occp, test_version)
 	zassert_equal(patch, 0, "Unexpected OCCP patch version: %d", patch);
 }
 
+/**
+ * @brief Checks that data written over OCCP reads back unchanged.
+ * @details Writes four bytes to the permitted SMC SRAM window at 0xc0066000, reads them back and
+ * asserts they match.
+ * @ingroup tests_occp
+ */
 ZTEST(occp, test_read_write)
 {
 	int ret;

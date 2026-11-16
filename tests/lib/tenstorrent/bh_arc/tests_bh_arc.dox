@@ -1,0 +1,86 @@
+/**
+
+@brief BH ARC firmware tests
+@defgroup tests_bh_arc BH ARC firmware
+@ingroup all_tests
+@details
+The ARC management firmware runs power, clock, thermal and fan control for the chip. It
+also handles the message queue that receives requests from the other controllers, and
+keeps the GDDR calibration table. The tests in this area cover those functions, split by
+the part of the firmware under test.
+@{
+@}
+
+@defgroup tests_bh_arc_msgqueue Message queue
+@ingroup tests_bh_arc
+@details
+The message queue that dispatches incoming firmware requests to their handlers. The tests
+check the reply for each request type, including voltage, clock, flash, PCIe and telemetry
+commands.
+@{
+@}
+
+@defgroup tests_bh_arc_smbus SMBus target
+@ingroup tests_bh_arc
+@details
+The SMBus target interface through which the management controller sends commands and
+reads telemetry. The tests check command validation, read and write transfers, and the
+error count.
+@{
+@}
+
+@defgroup tests_bh_arc_aiclk AICLK power management
+@ingroup tests_bh_arc
+@details
+AICLK power management, which sets the AI clock target from the enabled min and max
+arbiters and any fmax limit. The tests check arbiter selection, clamping, bitmasks and the
+AICLK messages.
+@{
+@}
+
+@defgroup tests_bh_arc_gddr GDDR
+@ingroup tests_bh_arc
+@details
+GDDR memory power control, carried out through the MRISC message register. The tests check
+the power-on and power-off messages, and the error returns when the register is busy or
+does not respond.
+@{
+@}
+
+@defgroup tests_bh_arc_fan Fan control
+@ingroup tests_bh_arc
+@details
+Fan control, which maps the ASIC and GDDR temperatures to a fan speed percentage with
+hysteresis on the GDDR input. The tests check the curve and that its output stays within
+bounds.
+@{
+@}
+
+@defgroup tests_bh_arc_vf Voltage-frequency curve
+@ingroup tests_bh_arc
+@details
+The voltage-frequency curve used to convert between a voltage and the frequency it
+supports. The tests check the message handlers and that converting a frequency to a
+voltage and back returns a value close to the start.
+@{
+@}
+
+@defgroup tests_bh_arc_cat Thermal trip
+@ingroup tests_bh_arc
+@details
+Thermal trip monitoring for GDDR, which trips on sustained over-temperature or on an
+immediate critical reading. The tests check the dwell timing and the behaviour when the
+thresholds are zero.
+@{
+@}
+
+@defgroup tests_bh_arc_gddr_cal GDDR calibration table
+@ingroup tests_bh_arc
+@details
+The GDDR calibration table, stored in two alternating flash banks that carry sequence
+numbers and checksums. The tests check writes, reads, and recovery from damaged or
+interrupted writes.
+@{
+@}
+
+*/
