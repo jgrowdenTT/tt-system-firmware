@@ -1,0 +1,5 @@
+# Kconfig for the MCUboot multi-key ztest. Pulls in MCUboot's own options so the
+# bootutil sources see the same CONFIG_BOOT_* symbols as the bootloader build.
+mainmenu "MCUboot multi-key ztest"
+
+rsource "../../../bootloader/mcuboot/boot/zephyr/Kconfig"

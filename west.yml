@@ -9,6 +9,9 @@ manifest:
       url-base: https://github.com/tenstorrent-forks
     - name: openbmc
       url-base: https://github.com/openbmc
+    # TEST ONLY: cdns_align with the mcuboot 2.5.0 pin, from the developer fork.
+    - name: jgrowden
+      url-base: https://github.com/jgrowdenTT
 
   # zephyr-keep-sorted-start re(^\s+\- name:)
   projects:
@@ -21,9 +24,9 @@ manifest:
       path: modules/lib/librpmi
       revision: 23e94f7007731e91be4de7c1d9c8c48b2173f6a2
     - name: zephyr
-      remote: tenstorrent
-      repo-path: zephyr-fork
-      revision: ea2ac9af2d0e2e021f88a2cbf1b6bbad7a0d8940
+      remote: jgrowden
+      repo-path: zephyr
+      revision: 1bec6571e9f59d9be52ee91fe9ff9b730834a781
       import:
         name-allowlist:
           - cmsis_6
