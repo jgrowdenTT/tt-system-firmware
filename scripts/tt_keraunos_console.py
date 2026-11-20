@@ -13,6 +13,7 @@ Usage: tt_keraunos_console.py <k|m0|m1|m2|m3|q0> <device_id> [--also TARGET]... 
 import argparse
 import os
 import re
+import select
 import signal
 import subprocess
 import sys
@@ -81,13 +82,29 @@ def main():
     out_lock = threading.Lock()
     procs = []
 
-    def emit(line):
-        with out_lock:
-            sys.stdout.buffer.write(line)
-            sys.stdout.buffer.flush()
+    stdout_fd = sys.stdout.fileno()
 
-    def pump(proc):
+    def emit(line):
+        # stdout is a non-blocking pty master: when twister's reader falls behind (large gcov dumps)
+        # a plain write raises BlockingIOError and kills this script mid-dump. Wait for the fd to
+        # become writable and retry instead, so no output is lost or interleaved with a traceback.
+        view = memoryview(line)
+        with out_lock:
+            while view:
+                try:
+                    n = os.write(stdout_fd, view)
+                except BlockingIOError:
+                    select.select([], [stdout_fd], [], 0.5)
+                    continue
+                view = view[n:]
+
+    def pump(proc, raw=None):
         for line in iter(proc.stdout.readline, b""):
+            if raw is not None:
+                # Raw copy of the tool's own output, before any emit/pty handling.
+                raw.write(line)
+                raw.flush()
+                os.fsync(raw.fileno())
             emit(line)
 
     def secondary(target):
@@ -128,12 +145,17 @@ def main():
     if args.pass_scratch:
         threading.Thread(target=watch_pass_token, args=(args.pass_scratch,), daemon=True).start()
 
+    # GR_CONSOLE_RAW=<file> keeps a byte-exact copy of the primary tool's output for debugging
+    # missing bytes (compare it with what twister records).
+    raw_path = os.environ.get("GR_CONSOLE_RAW")
+    raw = open(raw_path, "ab") if raw_path else None
+
     rc = 0
     while not stop.is_set():
         start = time.monotonic()
         proc = subprocess.Popen([tool, args.target, args.device_id], stdout=subprocess.PIPE)
         procs.append(proc)
-        pump(proc)
+        pump(proc, raw)
         rc = proc.wait()
         # A run that lasted a while was a real session; only retry quick start-up failures.
         if rc == 0 or time.monotonic() - start > 2 or time.monotonic() > deadline:

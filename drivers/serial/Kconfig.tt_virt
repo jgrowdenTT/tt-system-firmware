@@ -31,7 +31,7 @@ config UART_TT_VIRT_TX_BLOCK
 
 config UART_TT_VIRT_TX_BLOCK_TIMEOUT_MS
 	int "TX buffer block timeout (in ms)"
-	default 1000
+	default 10000
 	range 0 2147483647
 	depends on UART_TT_VIRT_TX_BLOCK
 	help

@@ -17,8 +17,29 @@ hwmap id's last dash-separated field (mmk-k0 -> k0, qsr1a1-q0 -> q0) unless --ta
 import argparse
 import os
 import sys
+import time
 
 from gr_pcie_dm import CHIPLET_CHOICES, DEFAULT_RESET_VECTOR, DmError, NocDevice, SmcTarget, chiplet_spa_base
+
+# Append-only record of which test each flash starts, fsynced before the device is touched, so the
+# last line still names the running test if the host dies. Kept outside twister's --outdir (which
+# --clobber-output removes). Override with GR_TEST_TRACE.
+TRACE_PATH = os.environ.get("GR_TEST_TRACE", os.path.expanduser("~/gr-test-trace.log"))
+
+
+def trace(event, target, build_dir):
+    """Durably append one line; never let a trace failure stop the flash."""
+    test = os.path.basename(os.path.normpath(build_dir))
+    line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {event:<7} {target:<4} {test} {build_dir}\n"
+    try:
+        fd = os.open(TRACE_PATH, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        try:
+            os.write(fd, line.encode())
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError as e:
+        print(f"warning: test trace not written to {TRACE_PATH}: {e}", file=sys.stderr)
 
 
 def images(build_dir):
@@ -67,6 +88,7 @@ def main():
     try:
         base = int(args.spa_base, 16) if args.spa_base else chiplet_spa_base(target)
         smc = SmcTarget(NocDevice(args.device_id), base)
+        trace("start", target, args.build_dir)
         for path in images(args.build_dir):
             print(f"Loading {path} at 0x{args.reset_vector:x} on {target}", flush=True)
             with open(path, "rb") as f:
@@ -78,6 +100,7 @@ def main():
                 vuart_timeout=args.vuart_timeout,
                 log=lambda msg: print(f"{target}: {msg}", flush=True),
             )
+        trace("loaded", target, args.build_dir)
     except (DmError, OSError, ValueError) as e:
         print(f"{target}: {e}", file=sys.stderr)
         return 1

@@ -53,6 +53,8 @@ cd "$WORKSPACE"
 source .venv/bin/activate
 source zephyr/zephyr-env.sh >/dev/null 2>&1
 export ZEPHYR_SDK_INSTALL_DIR="${ZEPHYR_SDK_INSTALL_DIR:-$HOME/zephyr-sdk-1.0.1}"
+# twister's coverage step reads this without a default and crashes when it is unset (--coverage).
+export ZEPHYR_TOOLCHAIN_VARIANT="${ZEPHYR_TOOLCHAIN_VARIANT:-zephyr}"
 
 common=(
 	--device-testing
