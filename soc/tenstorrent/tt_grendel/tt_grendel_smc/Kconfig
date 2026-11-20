@@ -23,6 +23,7 @@ config TT_GRENDEL_SMC
 	select ATOMIC_OPERATIONS_BUILTIN
 	select INCLUDE_RESET_VECTOR
 	select SOC_EARLY_INIT_HOOK
+	select HAS_COVERAGE_SUPPORT
 	help
 	  Tenstorrent Grendel System Management Core. This Kconfig should
 	  be selected for all flavors of the Grendel SMC SoC.

@@ -38,9 +38,10 @@ struct uart_tt_virt_data {
 
 	uint32_t err_flags;
 
-#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+	/* Serializes producers on the TX ring (polled and FIFO paths) and the RX/IRQ state */
 	struct k_spinlock vuart_lock;
 
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	bool err_irq_en;
 	bool rx_irq_en;
 	bool tx_irq_en;
@@ -329,7 +330,15 @@ void uart_tt_virt_poll_out(const struct device *dev, unsigned char out_char)
 	struct uart_tt_virt_data *data = dev->data;
 	volatile struct tt_vuart *const vuart = data->vuart;
 
-	tt_vuart_poll_out(vuart, out_char, TT_VUART_ROLE_DEVICE);
+	/*
+	 * tt_vuart_poll_out() needs a single producer per ring. printk can run from interrupt
+	 * context, so serialize it with the same lock the FIFO path uses. Without this, an
+	 * interrupt between the tail load and the tail store overwrites a character silently
+	 * (tx_oflow does not count it).
+	 */
+	K_SPINLOCK(&data->vuart_lock) {
+		tt_vuart_poll_out(vuart, out_char, TT_VUART_ROLE_DEVICE);
+	}
 }
 
 static DEVICE_API(uart, uart_tt_virt_api) = {
