@@ -1,0 +1,10 @@
+common:
+  tags:
+    - drivers
+tests:
+  drivers.tt_smc_remoteproc_error.error_paths:
+    tags: smoke
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+      - tt_qsr1a1/tt_keraunos/smc
+    harness: ztest
