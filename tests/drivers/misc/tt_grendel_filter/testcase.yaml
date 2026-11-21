@@ -1,9 +1,10 @@
 common:
   platform_allow:
-    - native_sim
+    - tt_mmk/tt_keraunos/smc
   tags:
     - drivers
 tests:
   drivers.misc.tt_grendel_filter:
-    # Private SiVal SDK tarball is not in CI. Revert when it is a west blob.
-    skip: true
+    # The SiVal SDK tarball is in zephyr/blobs/, so this builds wherever that file is present.
+    # The register accessors are faked, so the test does not touch the filter hardware.
+    tags: drivers

@@ -1,0 +1,12 @@
+/**
+
+@brief Grendel fabric filter
+@defgroup tests_tt_grendel_filter Grendel fabric filter
+@ingroup all_tests
+@details
+The Grendel fabric filter driver (tt_grendel_filter). The register accessors are faked, so the
+tests check the values the driver programs and its error mapping without touching hardware.
+@{
+@}
+
+*/

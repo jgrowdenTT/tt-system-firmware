@@ -18,6 +18,34 @@
 
 DEFINE_FFF_GLOBALS;
 
+/*
+ * filter_arm() and filter_disable() are linked with --wrap. When forced_err is not GRENDEL_ERR_OK
+ * the wrapper returns it without calling the real firewall code, so the driver's error mapping can
+ * be exercised with codes the real firewall never returns.
+ */
+static grendel_err_t forced_err;
+
+grendel_err_t __real_filter_arm(filter_t filter, uint32_t filter_index, uint32_t hsio_tile,
+				uint64_t start_addr, uint64_t end_addr, filter_fields_t fields);
+grendel_err_t __real_filter_disable(filter_t filter, uint32_t filter_index, uint32_t hsio_tile);
+
+grendel_err_t __wrap_filter_arm(filter_t filter, uint32_t filter_index, uint32_t hsio_tile,
+				uint64_t start_addr, uint64_t end_addr, filter_fields_t fields)
+{
+	if (forced_err != GRENDEL_ERR_OK) {
+		return forced_err;
+	}
+	return __real_filter_arm(filter, filter_index, hsio_tile, start_addr, end_addr, fields);
+}
+
+grendel_err_t __wrap_filter_disable(filter_t filter, uint32_t filter_index, uint32_t hsio_tile)
+{
+	if (forced_err != GRENDEL_ERR_OK) {
+		return forced_err;
+	}
+	return __real_filter_disable(filter, filter_index, hsio_tile);
+}
+
 DEFINE_FAKE_VOID_FUNC(write16_reg, uint64_t, uint16_t);
 DEFINE_FAKE_VALUE_FUNC(uint16_t, read16_reg, uint64_t);
 DEFINE_FAKE_VOID_FUNC(write32_reg, uint64_t, uint32_t);
@@ -59,6 +87,7 @@ static void assert_write64(uint64_t addr, uint64_t value)
 static void before(void *f)
 {
 	ARG_UNUSED(f);
+	forced_err = GRENDEL_ERR_OK;
 	RESET_FAKE(write16_reg);
 	RESET_FAKE(read16_reg);
 	RESET_FAKE(write32_reg);
@@ -167,6 +196,69 @@ ZTEST(tt_grendel_filter, test_enable_rejects_bad_args)
 ZTEST(tt_grendel_filter, test_disable_rejects_bad_entry)
 {
 	zassert_equal(tt_grendel_filter_disable(SMC_INBOUND, 16, 0), -EINVAL);
+	zassert_equal(write64_reg_fake.call_count, 0);
+}
+
+/**
+ * @brief Enabling an entry for a filter type this platform does not have fails with -EINVAL.
+ * @details MIMIR_ITN_MEM_TILE0 is a valid bank index but is not built for the Keraunos SMC, so
+ * the real firewall code returns GRENDEL_ERR_FIREWALL_INVALID_PARAM. The driver must map that to
+ * -EINVAL and must not program any registers.
+ * @ingroup tests_tt_grendel_filter
+ */
+ZTEST(tt_grendel_filter, test_enable_unsupported_filter_type)
+{
+	struct tt_grendel_filter_flags rw = {
+		.read = 1,
+		.write = 1,
+	};
+
+	zassert_equal(tt_grendel_filter_enable((uint32_t)MIMIR_ITN_MEM_TILE0, 0, 0, 0, 1, rw),
+		      -EINVAL);
+	zassert_equal(write64_reg_fake.call_count, 0);
+}
+
+/**
+ * @brief Disabling an entry for a filter type this platform does not have fails with -EINVAL.
+ * @details Same unsupported filter type as the enable test. The firewall returns
+ * GRENDEL_ERR_FIREWALL_INVALID_PARAM, which the driver must map to -EINVAL without writing
+ * any registers.
+ * @ingroup tests_tt_grendel_filter
+ */
+ZTEST(tt_grendel_filter, test_disable_unsupported_filter_type)
+{
+	zassert_equal(tt_grendel_filter_disable((uint32_t)MIMIR_ITN_MEM_TILE0, 0, 0), -EINVAL);
+	zassert_equal(write64_reg_fake.call_count, 0);
+}
+
+/**
+ * @brief An unexpected firewall error on enable is reported as -EIO.
+ * @details Forces filter_arm() to return GRENDEL_ERR_SMC_TIMEOUT, a code the driver does not map
+ * explicitly. The driver must log it and return -EIO, without programming any registers.
+ * @ingroup tests_tt_grendel_filter
+ */
+ZTEST(tt_grendel_filter, test_enable_unmapped_error_is_eio)
+{
+	struct tt_grendel_filter_flags rw = {
+		.read = 1,
+		.write = 1,
+	};
+
+	forced_err = GRENDEL_ERR_SMC_TIMEOUT;
+	zassert_equal(tt_grendel_filter_enable(SMC_INBOUND, 0, 0, 0, 1, rw), -EIO);
+	zassert_equal(write64_reg_fake.call_count, 0);
+}
+
+/**
+ * @brief An unexpected firewall error on disable is reported as -EIO.
+ * @details Forces filter_disable() to return GRENDEL_ERR_SMC_TIMEOUT, which the driver does not
+ * map explicitly. The driver must return -EIO, without programming any registers.
+ * @ingroup tests_tt_grendel_filter
+ */
+ZTEST(tt_grendel_filter, test_disable_unmapped_error_is_eio)
+{
+	forced_err = GRENDEL_ERR_SMC_TIMEOUT;
+	zassert_equal(tt_grendel_filter_disable(SMC_INBOUND, 0, 0), -EIO);
 	zassert_equal(write64_reg_fake.call_count, 0);
 }
 

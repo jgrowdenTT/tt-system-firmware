@@ -25,6 +25,10 @@ target_include_directories(app PRIVATE
   ${SIVAL_SDK}/firmware/drivers/firewall/include
 )
 
+# Route the driver's calls to filter_arm/filter_disable through wrappers in main.c, so tests can
+# force firewall error codes the real firewall code never returns.
+zephyr_link_libraries(-Wl,--wrap=filter_arm -Wl,--wrap=filter_disable)
+
 target_sources(app PRIVATE
   src/main.c
   ${SYSFW_ROOT}/drivers/misc/tt_grendel_filter/tt_grendel_filter.c
