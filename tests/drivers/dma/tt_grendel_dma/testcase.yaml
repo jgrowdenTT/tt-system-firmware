@@ -1,0 +1,8 @@
+tests:
+  drivers.dma.tt_grendel_dma:
+    tags: drivers dma
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+      - tt_mmk/tt_mimir/smc
+    extra_args:
+      - "DTC_OVERLAY_FILE=boards/tt_grendel.overlay"
