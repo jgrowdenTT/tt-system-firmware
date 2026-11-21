@@ -1,0 +1,65 @@
+/**
+
+@brief BL0.5 launcher
+@defgroup tests_bl0p5_launch BL0.5 launcher
+@ingroup all_tests
+@details
+The BL0.5 launcher (app/bl0p5/src/bl0p5_launch.c) runs the host handshake, checks the staged
+BUN2 bundle, copies the SMC BL1 image to its load address, and jumps to it.
+
+The tests run the real launcher on the host, on native_sim. The BUN2 staging area, the host boot
+state and bundle validation registers, and the reset vector are RAM buffers. A pause hook plays
+the host by writing the next scripted register value on each poll. The jump is an FFF fake, so
+the launcher returns instead of transferring control.
+
+@section tests_bl0p5_launch_scope Scope
+
+Covered on the host:
+- The handshake states the launcher writes and waits for.
+- Bundle validation: TOC index 0 must be an SMC BL1 image.
+- The copy of the BL1 image, the reset vector write, and the jump.
+
+Not covered by these tests:
+- The real jump into BL1, and what happens if BL1 returns. Those need the device.
+- The host side of the handshake, which runs on the host over PCIe. The end-to-end device tests
+  cover it and are not part of this group yet.
+- Failure modes the launcher does not yet check. See the proposed checks below.
+
+@section tests_bl0p5_launch_plan Test plan
+
+| Test | Expected behaviour |
+|---|---|
+| test_announces_wait_for_bundle_first | Host state is WAIT_FOR_BUNDLE (1) on the first poll. |
+| test_staged_check_masks_upper_bits | Only the low nibble of the host state is compared. 0x11 keeps waiting, 0x12 proceeds. |
+| test_validation_requires_validated_bit | The READY bit alone does not complete validation. |
+| test_valid_bundle_copies_bl1_and_jumps | Host state is CONSUMED before the copy. The image is in place at the jump. The reset vector and jump get the entry point. TOC entry 1 is not copied. |
+| test_empty_bundle_returns_enoent | No TOC entries returns -ENOENT. No copy, no jump, host state stays STAGED. |
+| test_wrong_type_at_index0_returns_enoent | An SMC BL0.5 image at index 0 returns -ENOENT, even with SMC BL1 at index 1. |
+| test_bl1_at_later_index_is_not_used | A SEP BL1 image at index 0 returns -ENOENT, even with SMC BL1 at index 1. |
+| test_staging_timeout_returns_etimedout | A host that never stages gets -ETIMEDOUT after max_polls polls. No copy, no jump, host state stays WAIT (1). |
+| test_validation_timeout_returns_etimedout | A host that stages but never validates gets -ETIMEDOUT after max_polls validation polls. No copy, no jump, host state stays STAGED (2). |
+| test_staging_on_last_allowed_poll_succeeds | Staging on poll max_polls is accepted, and the launcher jumps. |
+| test_staging_one_poll_late_times_out | Staging one poll after the budget gives -ETIMEDOUT, with no copy and no jump. |
+
+The test functions are documented in the source with the same descriptions.
+
+@section tests_bl0p5_launch_proposed Proposed checks for the launcher
+
+These are not implemented. Each one is a decision about the production code, so each needs
+review before it changes:
+
+1. Bounds on the staging area. Check that payload_offset is non-negative and inside the staging
+   area, and that payload_offset + offset + length stays inside it, without overflow.
+2. Bounds on load_addr. The copy must not overlap BL0.5's own image, its stack, the staging area,
+   or the reset vector. Right now a bad load_addr can overwrite BL0.5 while it is running.
+3. Entry point inside the image. Check that entry_point falls in [load_addr, load_addr + length).
+4. Manifest version. Reject a manifest_version_major the launcher does not support.
+5. A validation failure state. The validation register has no failure value, so the launcher
+   can only wait for success.
+6. main() should log the return value of bl0p5_launch() before k_panic(). Today the error is
+   dropped silently.
+7. Image integrity. TOC entries carry a 32-byte hash. The launcher does not check the copied
+   image against it. Whether to check it here depends on what the hardware or BL1 already
+   verifies, which is a question for the bundle owners.
+
+*/

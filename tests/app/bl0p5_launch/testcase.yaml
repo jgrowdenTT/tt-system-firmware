@@ -1,0 +1,12 @@
+common:
+  tags:
+    - app
+    - bl0p5
+    - smoke
+  harness: ztest
+tests:
+  app.bl0p5.launch:
+    platform_allow:
+      - native_sim/native/64
+      - tt_mmk/tt_keraunos/smc
+      - tt_qsr1a1/tt_keraunos/smc
