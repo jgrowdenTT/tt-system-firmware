@@ -12,7 +12,11 @@ Usage:
 Then in GDB:
     (gdb) target remote :3333
 
-Monitor commands: reset [halt|run], halt, resume, status, help.
+Monitor commands: reset [halt|run], halt, resume, status, triggers, help.
+
+Hardware breakpoints (hbreak) and watchpoints (watch/rwatch/awatch) use the Debug Module's mcontrol triggers,
+which fire before the access, so GDB steps over the instruction itself. A watched range that is not a naturally
+aligned power of two is covered by the smallest aligned power-of-two range that contains it.
 """
 
 import argparse
@@ -43,6 +47,26 @@ PACKET_SIZE = 0x4000
 SIGINT, SIGTRAP = 2, 5
 EBREAK_4 = b"\x73\x00\x10\x00"
 EBREAK_2 = b"\x02\x90"  # c.ebreak
+
+# Debug triggers (RISC-V Debug Spec 0.13 section 5.2): mcontrol (type 2) owned by Debug Mode
+CSR_TSELECT, CSR_TDATA1, CSR_TDATA2 = 0x7A0, 0x7A1, 0x7A2
+CAUSE_TRIGGER = 2
+MAX_TRIGGERS = 16
+MCONTROL_TYPE = 2 << 60
+MCONTROL_DMODE = 1 << 59
+MCONTROL_HIT = 1 << 20
+MCONTROL_ACTION_DEBUG = 1 << 12
+MCONTROL_MATCH_EQUAL, MCONTROL_MATCH_NAPOT = 0, 1
+MCONTROL_M = 1 << 6
+MCONTROL_EXECUTE, MCONTROL_STORE, MCONTROL_LOAD = 4, 2, 1
+MCONTROL_CHECKED = ~((0x3F << 53) | MCONTROL_HIT)  # maskmax is read-only, hit is set by hardware
+# GDB Z/z type -> (mcontrol access bits, stop-reply reason)
+Z_TRIGGER_KINDS = {
+    "1": (MCONTROL_EXECUTE, "hwbreak"),
+    "2": (MCONTROL_STORE, "watch"),
+    "3": (MCONTROL_LOAD, "rwatch"),
+    "4": (MCONTROL_LOAD | MCONTROL_STORE, "awatch"),
+}
 
 GPR_NAMES = (
     "zero ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6"
@@ -255,6 +279,8 @@ class GdbServer:
         self.zephyr = ZephyrThreads(args.elf, self.read_memory) if args.elf else None
         self.reg_thread = None  # thread selected by Hg, None = the running one
         self.breakpoints = {}  # addr -> (kind, original bytes)
+        self.num_triggers = None  # found on first use, while the hart is halted
+        self.triggers = []  # per trigger: None or (Z type, addr, length)
         self.target_xml = build_target_xml().encode()
         self.rsp = None
         self.last_signal = SIGTRAP
@@ -281,6 +307,96 @@ class GdbServer:
             except DmError:
                 pass
         self.breakpoints.clear()
+        self.remove_all_triggers()
+
+    # -- hardware triggers --
+
+    def trigger_count(self):
+        """Number of mcontrol triggers (0 if the Debug Module has none); needs the hart halted."""
+        if self.num_triggers is None:
+            count = 0
+            try:
+                for t in range(MAX_TRIGGERS):
+                    self.smc.write_reg(CSR_TSELECT, t)
+                    if self.smc.read_reg(CSR_TSELECT) != t:
+                        break
+                    if self.smc.read_reg(CSR_TDATA1) >> 60 != 2:
+                        break
+                    count += 1
+            except DmError:
+                pass  # no trigger CSRs at all
+            self.num_triggers = count
+            self.triggers = [None] * count
+            self.log(f"{count} hardware triggers")
+        return self.num_triggers
+
+    def write_trigger(self, index, tdata1, tdata2):
+        self.smc.write_reg(CSR_TSELECT, index)
+        self.smc.write_reg(CSR_TDATA1, MCONTROL_TYPE | MCONTROL_DMODE | MCONTROL_ACTION_DEBUG)  # disabled
+        if tdata1 is None:
+            return True
+        self.smc.write_reg(CSR_TDATA2, tdata2)
+        self.smc.write_reg(CSR_TDATA1, tdata1)
+        return (self.smc.read_reg(CSR_TDATA1) ^ tdata1) & MCONTROL_CHECKED == 0
+
+    def insert_trigger(self, ztype, addr, length):
+        """Returns False if no trigger is free or the Debug Module cannot do what is asked."""
+        if (ztype, addr, length) in self.triggers:
+            return True
+        if None not in self.triggers:
+            return False
+        index = self.triggers.index(None)
+        kinds = Z_TRIGGER_KINDS[ztype][0]
+        if ztype == "1" or length <= 1:
+            match, tdata2 = MCONTROL_MATCH_EQUAL, addr
+        else:
+            size = 2
+            while addr // size != (addr + length - 1) // size:
+                size *= 2
+            match, tdata2 = MCONTROL_MATCH_NAPOT, (addr & ~(size - 1)) | (size // 2 - 1)
+        tdata1 = MCONTROL_TYPE | MCONTROL_DMODE | MCONTROL_ACTION_DEBUG | (match << 7) | MCONTROL_M | kinds
+        if not self.write_trigger(index, tdata1, tdata2):
+            self.write_trigger(index, None, 0)
+            return False
+        self.triggers[index] = (ztype, addr, length)
+        return True
+
+    def remove_trigger(self, ztype, addr, length):
+        if (ztype, addr, length) in self.triggers:
+            index = self.triggers.index((ztype, addr, length))
+            self.triggers[index] = None
+            self.write_trigger(index, None, 0)
+
+    def remove_all_triggers(self):
+        """Clears every trigger, halting the hart first if needed (release_to_system resumes it)."""
+        if any(self.triggers):
+            try:
+                if not self.smc.is_halted():
+                    self.smc.halt()  # an armed trigger left behind would halt the hart with no debugger attached
+            except DmError:
+                pass
+        for index, trig in enumerate(self.triggers):
+            if trig:
+                self.triggers[index] = None
+                try:
+                    self.write_trigger(index, None, 0)
+                except DmError:
+                    pass
+
+    def trigger_stop_reason(self):
+        """After a trigger halt: the RSP stop-reply reason (e.g. 'watch:c007a958;') of the trigger that fired."""
+        reason = ""
+        for index, trig in enumerate(self.triggers):
+            if not trig:
+                continue
+            self.smc.write_reg(CSR_TSELECT, index)
+            tdata1 = self.smc.read_reg(CSR_TDATA1)
+            if tdata1 & MCONTROL_HIT:
+                self.smc.write_reg(CSR_TDATA1, tdata1 & ~MCONTROL_HIT)
+                if not reason:
+                    name = Z_TRIGGER_KINDS[trig[0]][1]
+                    reason = f"{name}:;" if trig[0] == "1" else f"{name}:{trig[1]:x};"
+        return reason
 
     def do_reset(self, halt):
         smc = self.smc
@@ -301,6 +417,7 @@ class GdbServer:
             smc.clear_halt_request()
             smc.write_dcsr(smc.read_dcsr() | 1 << 15)
         self.breakpoints.clear()  # the image reload discarded any inserted breakpoints
+        self.triggers = [None] * len(self.triggers)  # the hart reset cleared the triggers
         self.last_signal = SIGTRAP
 
     def thread_list(self):
@@ -317,8 +434,11 @@ class GdbServer:
         cause = self.smc.halt_cause()
         self.last_signal = SIGINT if cause == CAUSE_HALTREQ else SIGTRAP
         self.reg_thread = None
+        reason = self.trigger_stop_reason() if cause == CAUSE_TRIGGER else ""
         info = self.thread_list()
-        return f"T{self.last_signal:02x}thread:{info[0]:x};" if info else f"S{self.last_signal:02x}"
+        if info:
+            return f"T{self.last_signal:02x}thread:{info[0]:x};{reason}"
+        return f"T{self.last_signal:02x}{reason}" if reason else f"S{self.last_signal:02x}"
 
     def selected_thread(self):
         """The non-running thread chosen with Hg, or None when registers come from the hart."""
@@ -411,8 +531,19 @@ class GdbServer:
                 f"dmstatus=0x{st:08x} halted={bool(st & ALLHALTED)} havereset={bool(st & ANYHAVERESET)} "
                 f"in_reset={self.smc.core_in_reset()}\n"
             )
+        elif words == ["triggers"]:
+            if self.num_triggers is None and self.smc.is_halted():
+                self.trigger_count()
+            if not self.triggers:
+                out = "no hardware triggers found (yet)\n"
+            for index, trig in enumerate(self.triggers):
+                if trig:
+                    name = Z_TRIGGER_KINDS[trig[0]][1]
+                    out += f"trigger {index}: {name} 0x{trig[1]:x} len {trig[2]}\n"
+                else:
+                    out += f"trigger {index}: free\n"
         else:
-            out = "monitor commands: reset [halt|run], halt, resume, status\n"
+            out = "monitor commands: reset [halt|run], halt, resume, status, triggers\n"
         return out
 
     def handle(self, pkt):
@@ -472,8 +603,15 @@ class GdbServer:
             return self.handle_vcont(pkt.decode())
         if c in "Zz":
             kind, addr, length = body.split(",")[0], int(body.split(",")[1], 16), int(body.split(",")[2], 16)
+            if kind in Z_TRIGGER_KINDS:
+                if not self.trigger_count():
+                    return ""  # this Debug Module has no triggers
+                if c == "z":
+                    self.remove_trigger(kind, addr, length)
+                    return "OK"
+                return "OK" if self.insert_trigger(kind, addr, length) else "E01"
             if kind != "0":
-                return ""  # hardware breakpoints/watchpoints need triggers, which the SMC DM lacks
+                return ""
             if c == "Z":
                 self.insert_breakpoint(addr, length)
             else:
@@ -496,7 +634,7 @@ class GdbServer:
             smc.release_to_system()
             return "OK" if pkt.startswith(b"vKill") else None
         if pkt.startswith(b"qSupported"):
-            return f"PacketSize={PACKET_SIZE:x};qXfer:features:read+;vContSupported+"
+            return f"PacketSize={PACKET_SIZE:x};qXfer:features:read+;vContSupported+;hwbreak+"
         if pkt.startswith(b"qXfer:features:read:target.xml:"):
             off, length = (int(x, 16) for x in body.rsplit(":", 1)[1].split(","))
             chunk = self.target_xml[off : off + length]
