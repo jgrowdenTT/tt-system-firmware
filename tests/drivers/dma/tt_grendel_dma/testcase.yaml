@@ -1,0 +1,15 @@
+tests:
+  drivers.dma.tt_grendel_dma:
+    tags:
+      - drivers
+      - dma
+      - smoke
+    harness: ztest
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+      - tt_mmk/tt_mimir/smc
+      - tt_qsr1a1/tt_keraunos/smc
+      - tt_qsr1a1/tt_mimir/smc
+      - tt_qsr1a1/tt_quasar/smc
+    extra_args:
+      - "DTC_OVERLAY_FILE=boards/tt_grendel.overlay"

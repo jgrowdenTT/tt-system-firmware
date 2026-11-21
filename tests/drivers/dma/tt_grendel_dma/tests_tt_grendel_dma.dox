@@ -1,0 +1,12 @@
+/**
+
+@brief Grendel SMC AXI DMA
+@defgroup tests_tt_grendel_dma Grendel SMC AXI DMA
+@ingroup all_tests
+@details
+The Tenstorrent Grendel SMC AXI DMA driver. The tests cover argument validation, status queries,
+and memory-to-memory transfers, including chained blocks.
+@{
+@}
+
+*/
