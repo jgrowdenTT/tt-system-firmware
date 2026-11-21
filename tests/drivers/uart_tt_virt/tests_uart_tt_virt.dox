@@ -1,0 +1,12 @@
+/**
+
+@brief UART TT virtual UART
+@defgroup tests_uart_tt_virt UART TT virtual UART
+@ingroup all_tests
+@details
+Checks of the Tenstorrent virtual UART driver (uart_tt_virt) that the upstream uart_elementary
+suite does not cover: configuration validation that is specific to this driver.
+@{
+@}
+
+*/

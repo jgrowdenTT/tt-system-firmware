@@ -64,7 +64,7 @@ static int uart_tt_virt_config_get(const struct device *dev, struct uart_config 
 {
 	struct uart_tt_virt_data *data = dev->data;
 
-	data->cfg = *cfg;
+	*cfg = data->cfg;
 	return 0;
 }
 

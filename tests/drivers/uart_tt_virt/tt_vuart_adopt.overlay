@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * Two deferred-init virtual UARTs for the descriptor adoption tests. Each is initialised by the
+ * test itself with device_init(), so every adoption branch runs once per boot. Neither is the
+ * console, so neither touches the host-visible descriptor in SCRATCH[2].
+ *
+ * Regions are carved from the top of ram0, directly below vuart_ram (0xc0158000).
+ */
+/ {
+	vuarts {
+		vuart2: uart_tt_virt@2 {
+			compatible = "tenstorrent,vuart";
+			version = <0x00000000>;
+			reg = <0x2>;
+			rx-cap = <1024>;
+			tx-cap = <2048>;
+			memory-region = <&vuart2_ram>;
+			zephyr,deferred-init;
+			status = "okay";
+		};
+
+		vuart3: uart_tt_virt@3 {
+			compatible = "tenstorrent,vuart";
+			version = <0x00000000>;
+			reg = <0x3>;
+			rx-cap = <1024>;
+			tx-cap = <2048>;
+			memory-region = <&vuart3_ram>;
+			zephyr,deferred-init;
+			status = "okay";
+		};
+	};
+
+	vuart3_ram: memory@c0156000 {
+		compatible = "mmio-sram";
+		reg = <0x0 0xc0156000 0x0 0x1000>;
+	};
+
+	vuart2_ram: memory@c0157000 {
+		compatible = "mmio-sram";
+		reg = <0x0 0xc0157000 0x0 0x1000>;
+	};
+};
+
+/* Shrink ram0 by the 8 KB taken for vuart2_ram and vuart3_ram. */
+&ram0 {
+	reg = <0x0 0xc0067000 0x0 0xef000>;
+};
