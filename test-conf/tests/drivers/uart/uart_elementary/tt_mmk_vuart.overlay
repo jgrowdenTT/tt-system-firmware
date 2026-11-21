@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * Second virtual UART for the test DUT. vuart0 stays the console and host channel, so
+ * the test gets its own ring buffers and never touches the host-visible descriptor.
+ *
+ * The region is carved from the top of ram0, directly below vuart_ram (0xc0158000), which is
+ * the host-visible descriptor that SCRATCH[2] points at. Nothing else in ram0 changes.
+ */
+/ {
+	vuarts {
+		vuart1: uart_tt_virt@1 {
+			compatible = "tenstorrent,vuart";
+			version = <0x00000000>;
+			reg = <0x1>;
+			rx-cap = <1024>;
+			tx-cap = <2048>;
+			memory-region = <&vuart1_ram>;
+			status = "okay";
+		};
+	};
+
+	/* 36-byte header + 1024 rx + 2048 tx fits in 4 KB */
+	vuart1_ram: memory@c0157000 {
+		compatible = "mmio-sram";
+		reg = <0x0 0xc0157000 0x0 0x1000>;
+	};
+};
+
+/* Shrink ram0 by the 4 KB taken for vuart1_ram. */
+&ram0 {
+	reg = <0x0 0xc0067000 0x0 0xf0000>;
+};
+
+dut: &vuart1 {
+	loopback;
+	status = "okay";
+};

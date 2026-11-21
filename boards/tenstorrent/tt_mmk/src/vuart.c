@@ -11,9 +11,17 @@
 
 #include <soc.h>
 
+/*
+ * SCRATCH[2] is the host-visible console descriptor. Only the chosen console may publish
+ * there. Other VUART instances, such as test DUTs, must never overwrite it. Every VUART
+ * reports instance 0 (its version is fixed by the binding), so the device is compared instead.
+ */
 void uart_tt_virt_init_callback(const struct device *dev, size_t inst)
 {
 	ARG_UNUSED(inst);
+	if (dev != DEVICE_DT_GET(DT_CHOSEN(zephyr_console))) {
+		return;
+	}
 	WRITE_SCRATCH(2, (uint32_t)(uintptr_t)uart_tt_virt_get(dev));
 }
 
