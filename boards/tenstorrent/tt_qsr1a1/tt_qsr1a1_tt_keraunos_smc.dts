@@ -108,4 +108,9 @@
 		compatible = "tenstorrent,scratch-reg";
 		reg = <0x0 0xc0010170 0x0 0x4>;
 	};
+
+	coverage_handoff: coverage-handoff@c0010178 {
+		/* SCRATCH[15]: gcov heap chunk pointer for host-side coverage dump */
+		reg = <0x0 0xc0010178 0x0 0x4>;
+	};
 };

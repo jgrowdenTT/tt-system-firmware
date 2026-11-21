@@ -46,3 +46,13 @@ config TT_MSGQUEUE_NUM_MSG_CODES
 	  Size of the message handler table (message code range).
 
 endif
+
+config TT_COVERAGE_HANDOFF
+	bool "Coverage hand-off through the coverage-handoff scratch register"
+	depends on COVERAGE_GCOV
+	default y if $(dt_nodelabel_enabled,coverage_handoff)
+	select COVERAGE_HANDOFF_PLATFORM
+	help
+	  Implements coverage_transport_send(): each gcov heap buffer is published
+	  through the board's coverage-handoff scratch register, and the host reads
+	  it over the NOC and clears the register to acknowledge it.
