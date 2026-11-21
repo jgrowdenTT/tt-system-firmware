@@ -7,4 +7,4 @@ project(app LANGUAGES C)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/git_version.cmake)
 
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/main.c src/bl0p5_launch.c)
