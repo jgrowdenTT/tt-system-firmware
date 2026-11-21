@@ -23,6 +23,8 @@
   platform:
     - tt_mmk/tt_keraunos/smc
   connected: true
+  fixtures:
+    - gpio_loopback
   runner: gr_pcie_gdb
   runner_params:
     - "--target=k0"
@@ -38,6 +40,8 @@
   platform:
     - tt_mmk/tt_mimir/smc
   connected: true
+  fixtures:
+    - gpio_loopback
   runner: gr_pcie_gdb
   runner_params:
     - "--target=m0"
@@ -84,6 +88,8 @@
   platform:
     - tt_qsr1a1/tt_quasar/smc
   connected: true
+  fixtures:
+    - gpio_loopback
   runner: gr_pcie_gdb
   runner_params:
     - "--target=q0"

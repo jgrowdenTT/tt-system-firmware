@@ -1,0 +1,20 @@
+common:
+  tags:
+    - drivers
+    - gpio
+  depends_on: gpio
+  harness: ztest
+  harness_config:
+    fixture: gpio_loopback
+tests:
+  drivers.gpio.2pin:
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+      - tt_mmk/tt_mimir/smc
+    extra_args:
+      - "platform:tt_mmk/tt_keraunos/smc:DTC_OVERLAY_FILE=\
+         ../../../../../tt-system-firmware/test-conf/tests/drivers/gpio/gpio_basic_api/\
+         boards/tt_mmk_tt_keraunos_smc.overlay"
+      - "platform:tt_mmk/tt_mimir/smc:DTC_OVERLAY_FILE=\
+         ../../../../../tt-system-firmware/test-conf/tests/drivers/gpio/gpio_basic_api/\
+         boards/tt_mmk_tt_keraunos_smc.overlay"

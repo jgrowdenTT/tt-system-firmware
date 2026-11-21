@@ -5,7 +5,27 @@ common:
   depends_on: gpio
 tests:
   drivers.gpio.1pin:
+    # Plain scenario on MMK: no external pull-down and no gpio_external_pull_down fixture.
     tags: smoke
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+      - tt_mmk/tt_mimir/smc
+    extra_args:
+      - "platform:tt_mmk/tt_keraunos/smc:DTC_OVERLAY_FILE=\
+         ../../../../../tt-system-firmware/test-conf/tests/drivers/gpio/gpio_api_1pin/\
+         boards/tt_mmk_smc.overlay"
+      - "platform:tt_mmk/tt_keraunos/smc:CONF_FILE=\
+         ../../../../../tt-system-firmware/test-conf/tests/drivers/gpio/gpio_api_1pin/\
+         boards/tt_mimir_tt_mimir_smc.conf"
+      - "platform:tt_mmk/tt_mimir/smc:DTC_OVERLAY_FILE=\
+         ../../../../../tt-system-firmware/test-conf/tests/drivers/gpio/gpio_api_1pin/\
+         boards/tt_mmk_smc.overlay"
+      - "platform:tt_mmk/tt_mimir/smc:CONF_FILE=\
+         ../../../../../tt-system-firmware/test-conf/tests/drivers/gpio/gpio_api_1pin/\
+         boards/tt_mimir_tt_mimir_smc.conf"
+
+  drivers.gpio.1pin.external_pull_down:
+    # Needs the external pull-down node and the gpio_external_pull_down fixture.
     platform_allow:
       - tt_blackhole@p100a/tt_blackhole/smc
       - tt_blackhole@p150a/tt_blackhole/smc

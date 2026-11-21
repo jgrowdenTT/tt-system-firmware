@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/*
+ * MMK has no external pull-down, so this is the plain 1-pin scenario. The test uses gpio0 0 as
+ * its single pin. The MMK SMC has no simultaneous input and output mode, so most cases skip.
+ */
+/ {
+	aliases {
+		led0 = &led0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
