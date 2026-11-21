@@ -48,11 +48,11 @@ ZTEST(tt_smc_remoteproc, test_boot)
 	zassert_equal(ret, 0, "Failed to boot remote SMC: %d", ret);
 
 	/*
-	 * We don't return from the testsuite here. The remote SMC
-	 * will also boot a ZTEST, and that test passing is what actually
-	 * indicates success.
+	 * The remote SMC prints the line the console harness matches. Give it a moment to
+	 * reach that line before returning, so the primary's coverage dump runs on exit
+	 * instead of waiting out the device timeout.
 	 */
-	while (1) {
+	for (int i = 0; i < 2; i++) {
 		k_sleep(K_SECONDS(1));
 		TC_PRINT("Primary BL1 is alive!\n");
 	}
