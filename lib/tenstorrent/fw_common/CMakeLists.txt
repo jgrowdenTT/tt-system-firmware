@@ -7,6 +7,7 @@ zephyr_include_directories(.)
 zephyr_library_sources_ifdef(CONFIG_TT_MSGQUEUE msgqueue.c)
 zephyr_library_sources_ifdef(CONFIG_TT_FW_COMMON_EMUL reg_stub.c)
 zephyr_library_sources_ifdef(CONFIG_TT_TELEMETRY telemetry.c)
+zephyr_library_sources_ifdef(CONFIG_TT_COVERAGE_HANDOFF coverage_handoff.c)
 
 if(EXISTS ${APPLICATION_SOURCE_DIR}/VERSION)
   zephyr_library_compile_definitions(HAS_APP_VERSION=1)

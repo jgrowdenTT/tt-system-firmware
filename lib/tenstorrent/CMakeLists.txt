@@ -11,7 +11,11 @@ add_subdirectory_ifdef(CONFIG_TT_BIST bist)
 add_subdirectory_ifdef(CONFIG_TT_BOOT_BANNER banner)
 add_subdirectory_ifdef(CONFIG_TT_BOOT_FS boot_fs)
 add_subdirectory_ifdef(CONFIG_TT_EVENT event)
-add_subdirectory_ifdef(CONFIG_TT_FW_COMMON fw_common)
+# fw_common also carries the coverage hand-off, which boards use without the rest of fw_common.
+# Each fw_common source is still gated by its own option.
+if(CONFIG_TT_FW_COMMON OR CONFIG_TT_COVERAGE_HANDOFF)
+  add_subdirectory(fw_common)
+endif()
 add_subdirectory_ifdef(CONFIG_TT_GR_SMC gr_smc)
 add_subdirectory_ifdef(CONFIG_TT_JTAG_BOOTROM jtag_bootrom)
 # zephyr-keep-sorted-stop

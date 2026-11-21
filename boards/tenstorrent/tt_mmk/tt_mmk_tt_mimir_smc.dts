@@ -52,4 +52,9 @@
 		reg = <0x0 0xc000280c 0x0 0x4>;
 		status = "okay";
 	};
+
+	coverage_handoff: coverage-handoff@c0010178 {
+		/* SCRATCH[15]: gcov heap chunk pointer for host-side coverage dump */
+		reg = <0x0 0xc0010178 0x0 0x4>;
+	};
 };

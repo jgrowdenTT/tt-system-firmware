@@ -82,8 +82,17 @@ xconfig=(
 	-x=TM_TEST_DURATION=5
 )
 
+# Coverage: the report root must contain tt-system-firmware as well as zephyr, or gcovr drops its files.
+coverage=()
+for arg in "$@"; do
+	if [ "$arg" = "--coverage" ]; then
+		coverage=(--coverage-basedir "$WORKSPACE")
+		break
+	fi
+done
+
 rc=0
 # Builds run in parallel; twister locks each hardware-map entry, so tests queue per chiplet.
-west twister "${common[@]}" "${xconfig[@]}" "$@" -j 8 || rc=$?
+west twister "${common[@]}" "${xconfig[@]}" "${coverage[@]}" "$@" -j 8 || rc=$?
 
 exit $rc
