@@ -9,6 +9,8 @@ common:
     - "DTC_OVERLAY_FILE=../../../../tt-system-firmware/test-conf/tests/kernel/device/tt_grendel.overlay"
 tests:
   kernel.device:
+    # Passes but never prints the coverage dump end marker, so a coverage build waits out the timeout.
+    filter: not CONFIG_COVERAGE
     integration_platforms:
       - native_sim
     platform_exclude:
@@ -23,7 +25,7 @@ tests:
   kernel.device.minimallibc:
     integration_platforms:
       - native_sim
-    filter: CONFIG_MINIMAL_LIBC_SUPPORTED
+    filter: CONFIG_MINIMAL_LIBC_SUPPORTED and not CONFIG_COVERAGE
     tags:
       - libc
     extra_configs:
@@ -32,6 +34,8 @@ tests:
       - xenvm
       - xenvm/xenvm/gicv3
   kernel.device.pm:
+    # Passes but never prints the coverage dump end marker, so a coverage build waits out the timeout.
+    filter: not CONFIG_COVERAGE
     integration_platforms:
       - native_sim
     platform_exclude:
