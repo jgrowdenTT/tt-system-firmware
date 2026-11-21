@@ -1,0 +1,7 @@
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio0 20 0>; /* UART2_TX pad, shorted to 15 in ttsim */
+		in-gpios = <&gpio0 15 0>;  /* UART1_RX pad */
+	};
+};
