@@ -9,7 +9,14 @@
 #include <stdint.h>
 #include <zephyr/toolchain.h>
 
-FUNC_NORETURN void gr_smc_jump_to(uintptr_t entry_point);
+/**
+ * @brief Hand the core to the image at @p entry_point. Does not return when CONFIG_GR_SMC_JUMP_TO
+ * is set. That is the default, and the function is then compiled in and marked noreturn.
+ */
+#ifdef CONFIG_GR_SMC_JUMP_TO
+FUNC_NORETURN
+#endif
+void gr_smc_jump_to(uintptr_t entry_point);
 
 /* Chiplet type, from SMC_WRAP RESET_UNIT_CHIP_ID chip_id[1:0]. Fixed in RTL per chiplet type. */
 enum gr_smc_chip_type {

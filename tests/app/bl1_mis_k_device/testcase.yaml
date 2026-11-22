@@ -1,0 +1,15 @@
+common:
+  tags:
+    - app
+    - bl1
+  harness: ztest
+tests:
+  app.bl1.mis_launch.k.device:
+    tags:
+      - app
+      - bl1
+      - smoke
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+    extra_args:
+      - "DTC_OVERLAY_FILE=boards/mis_k_device.overlay"
