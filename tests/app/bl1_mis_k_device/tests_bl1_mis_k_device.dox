@@ -1,0 +1,31 @@
+/**
+
+@brief BL1 K mission-FW launch, on device
+@defgroup tests_bl1_mis_k_device BL1 K mission-FW launch, on device
+@ingroup all_tests
+@details
+On-device tests for the BL1 K launcher (app/bl1/mis_launch_k.c), run unchanged.
+
+The handshake registers, the staging area and the reset vector are the real SMC addresses. A
+cooperative host thread plays the host: it writes STAGED after the launcher starts, then sets
+VALIDATED once the launcher has requested validation.
+
+Two calls are faked, because they leave the device:
+- gr_smc_jump_to() never returns, so the tests only check that it was called.
+- tt_chiplet_remote_boot_launch_mis() would load and boot real Mimir chiplets.
+
+The launcher writes the reset vector before it jumps, so each test restores the original value
+afterwards.
+
+@section tests_bl1_mis_k_device_plan Test plan
+
+| Test | Expected behaviour |
+|---|---|
+| test_empty_bundle_returns_without_jump | An empty TOC makes the launcher return with no chiplet launch and no jump. |
+| test_wrong_type_returns_without_jump | An SMC BL1 image at TOC index 0 makes the launcher return with no jump. |
+| test_valid_mis_launches_chiplets_and_jumps | A valid MIS bundle sets the reset vector and jumps to MIS. No chiplet launch: the test overlay has no chiplet_boot node, so that branch is not covered. |
+
+@{
+@}
+
+*/

@@ -1,6 +1,15 @@
 # Copyright (c) 2026 Tenstorrent AI ULC
 # SPDX-License-Identifier: Apache-2.0
 
+config GR_SMC_JUMP_TO
+	bool "gr_smc_jump_to(): hand the core to the next image"
+	depends on TT_GR_SMC
+	default y
+	help
+	  Compile gr_smc_jump_to() and declare it FUNC_NORETURN. The jump never returns on
+	  hardware. Turn this off where a test replaces the jump with a fake that returns, so the
+	  caller is not compiled against a noreturn function.
+
 config TT_GR_SMC
 	bool "Grendel SMC support library"
 	select SIVAL_SDK

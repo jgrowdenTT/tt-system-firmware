@@ -80,6 +80,8 @@ struct gr_smc_chipid gr_smc_get_chipid(void)
 	};
 }
 
+#ifdef CONFIG_GR_SMC_JUMP_TO
+
 FUNC_NORETURN void gr_smc_jump_to(uintptr_t entry_point)
 {
 	LOG_INF("Jumping to %p", (void *)entry_point);
@@ -110,3 +112,5 @@ FUNC_NORETURN void gr_smc_jump_to(uintptr_t entry_point)
 		: "t0", "memory");
 	CODE_UNREACHABLE;
 }
+
+#endif /* CONFIG_GR_SMC_JUMP_TO */

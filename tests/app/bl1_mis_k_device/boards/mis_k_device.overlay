@@ -1,0 +1,24 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * The two handshake registers the K launcher reads, at their real SMC addresses. Nothing else.
+ * The BL1 overlay also moves ram0 into the BL1 window and adds the chiplet_boot node. The test
+ * needs neither: it is a standalone image and does not call the chiplet launch. ram0 stays at
+ * the board default, which the MIS apps also use.
+ */
+/ {
+	host_boot_state: scratch-reg@c0010160 {
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc0010160 0x0 0x4>;
+		status = "okay";
+	};
+
+	bundle_validation: scratch-reg@c0010150 {
+		compatible = "tenstorrent,scratch-reg";
+		reg = <0x0 0xc0010150 0x0 0x4>;
+		status = "okay";
+	};
+};
