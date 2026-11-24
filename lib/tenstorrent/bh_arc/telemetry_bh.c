@@ -183,6 +183,18 @@ static struct telemetry_table telemetry_table = {
 		[78] = {TAG_BOARD_ID_EXT_HIGH, TELEM_OFFSET(TAG_BOARD_ID_EXT_HIGH)},
 		[79] = {TAG_BOARD_ID_EXT_MIDDLE, TELEM_OFFSET(TAG_BOARD_ID_EXT_MIDDLE)},
 		[80] = {TAG_BOARD_ID_EXT_LOW, TELEM_OFFSET(TAG_BOARD_ID_EXT_LOW)},
+		[81] = {TAG_CCFGOVR_STATE, TELEM_OFFSET(TAG_CCFGOVR_STATE)},
+		[82] = {TAG_CCFGOVR_SEQ, TELEM_OFFSET(TAG_CCFGOVR_SEQ)},
+		[83] = {TAG_BOARD_ID_EXT_HIGH, TELEM_OFFSET(TAG_BOARD_ID_EXT_HIGH)},
+		[84] = {TAG_BOARD_ID_EXT_MIDDLE, TELEM_OFFSET(TAG_BOARD_ID_EXT_MIDDLE)},
+		[85] = {TAG_BOARD_ID_EXT_LOW, TELEM_OFFSET(TAG_BOARD_ID_EXT_LOW)},
+		[86] = {TAG_VCOREM_POWER, TELEM_OFFSET(TAG_VCOREM_POWER)},
+		[87] = {TAG_SERDES_VDDL_POWER, TELEM_OFFSET(TAG_SERDES_VDDL_POWER)},
+		[88] = {TAG_SERDES_VDD_POWER, TELEM_OFFSET(TAG_SERDES_VDD_POWER)},
+		[89] = {TAG_SERDES_VDDH_POWER, TELEM_OFFSET(TAG_SERDES_VDDH_POWER)},
+		[90] = {TAG_GDDR_VDDR_POWER, TELEM_OFFSET(TAG_GDDR_VDDR_POWER)},
+		[91] = {TAG_GDDR_VDDA_EAST_POWER, TELEM_OFFSET(TAG_GDDR_VDDA_EAST_POWER)},
+		[92] = {TAG_GDDR_VDDA_WEST_POWER, TELEM_OFFSET(TAG_GDDR_VDDA_WEST_POWER)},
 	},
 };
 /* clang-format on */
@@ -503,6 +515,16 @@ void telemetry_platform_update(void)
 	telemetry[TAG_GDDR_WEST_IO_POWER] = telemetry_internal_data.gddr_io_power_west;
 	/* reported in W, truncated to uint32_t */
 	telemetry[TAG_GDDR_EAST_IO_POWER] = telemetry_internal_data.gddr_io_power_east;
+	/* Rail powers below are read on this periodic update, not in the 1 ms DVFS path.
+	 * Reported in W, truncated to uint32_t.
+	 */
+	telemetry[TAG_VCOREM_POWER] = GetVcoremPower();
+	telemetry[TAG_SERDES_VDDL_POWER] = GetMpmRailPower(SERDES_VDDL_ADDR);
+	telemetry[TAG_SERDES_VDD_POWER] = GetMpmRailPower(SERDES_VDD_ADDR);
+	telemetry[TAG_SERDES_VDDH_POWER] = GetMpmRailPower(SERDES_VDDH_ADDR);
+	telemetry[TAG_GDDR_VDDR_POWER] = GetMpmRailPower(GDDR_VDDR_ADDR);
+	telemetry[TAG_GDDR_VDDA_EAST_POWER] = GetMpmRailPower(GDDR_VDDA_EAST_ADDR);
+	telemetry[TAG_GDDR_VDDA_WEST_POWER] = GetMpmRailPower(GDDR_VDDA_WEST_ADDR);
 	telemetry[TAG_NOP_START_COUNT] = GetStartNOPCount();
 	telemetry[TAG_NOP_ON_DURATION] = GetNOPOnDuration(telemetry_update_interval_ms());
 	telemetry[TAG_TIMER_HEARTBEAT]++; /* Incremented every time the timer is called */

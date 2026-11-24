@@ -47,6 +47,11 @@
 #define GDDR_IO_RAIL_VOLTAGE           1.35f   /* V - fixed IO rail supply */
 #define READ_POUT                      0x96
 #define READ_POUT_DATA_BYTE_SIZE       2
+/* MPM3695 READ_VOUT / READ_IOUT are plain unsigned counts with fixed LSB weights, no exponent. */
+#define MPM3695_READ_VOUT_MASK         0x1FFF  /* 13-bit raw VOUT field, bits 12:0 */
+#define MPM3695_READ_VOUT_LSB_V        0.00125f /* 1.25 mV per LSB */
+#define MPM3695_READ_IOUT_MASK         0x3FFF  /* 14-bit raw IOUT field, bits 13:0 */
+#define MPM3695_READ_IOUT_LSB_A        0.0625f /* 62.5 mA per LSB */
 #define OPERATION                      0x1
 #define OPERATION_DATA_BYTE_SIZE       1
 #define PMBUS_CMD_BYTE_SIZE            1
@@ -147,6 +152,37 @@ float GetVcorePower(void)
 	I2CReadBytes(PMBUS_MST_ID, READ_POUT, PMBUS_CMD_BYTE_SIZE, (uint8_t *)&pout,
 		     READ_POUT_DATA_BYTE_SIZE, PMBUS_FLIP_BYTES);
 	return ConvertLinear11ToFloat(pout);
+}
+
+/* The function returns the VCOREM rail power in W (MAX20816 rail B, LINEAR11 READ_POUT). */
+float GetVcoremPower(void)
+{
+	I2CInit(I2CMst, P0V8_VCOREM_ADDR, I2CFastMode, PMBUS_MST_ID);
+	uint16_t pout;
+
+	I2CReadBytes(PMBUS_MST_ID, READ_POUT, PMBUS_CMD_BYTE_SIZE, (uint8_t *)&pout,
+		     READ_POUT_DATA_BYTE_SIZE, PMBUS_FLIP_BYTES);
+	return ConvertLinear11ToFloat(pout);
+}
+
+/* The function returns the output power in W of the MPM3695 at addr. The MPM3695 has no
+ * READ_POUT, so the power is READ_VOUT x READ_IOUT.
+ */
+float GetMpmRailPower(uint8_t addr)
+{
+	uint16_t vout;
+	uint16_t iout;
+
+	I2CInit(I2CMst, addr, I2CFastMode, PMBUS_MST_ID);
+	I2CReadBytes(PMBUS_MST_ID, READ_VOUT, PMBUS_CMD_BYTE_SIZE, (uint8_t *)&vout,
+		     READ_VOUT_DATA_BYTE_SIZE, PMBUS_FLIP_BYTES);
+	I2CReadBytes(PMBUS_MST_ID, READ_IOUT, PMBUS_CMD_BYTE_SIZE, (uint8_t *)&iout,
+		     READ_IOUT_DATA_BYTE_SIZE, PMBUS_FLIP_BYTES);
+
+	float volts = (vout & MPM3695_READ_VOUT_MASK) * MPM3695_READ_VOUT_LSB_V;
+	float amps = (iout & MPM3695_READ_IOUT_MASK) * MPM3695_READ_IOUT_LSB_A;
+
+	return volts * amps;
 }
 
 static void set_max20730(uint32_t slave_addr, uint32_t voltage_in_mv, float rfb1, float rfb2)

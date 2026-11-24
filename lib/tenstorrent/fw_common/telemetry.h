@@ -528,12 +528,37 @@ typedef union {
 /** @brief Lower 32 bits of the extended board ID as flashed. */
 #define TAG_BOARD_ID_EXT_LOW 85
 
+/**
+ * @brief VCOREM rail power in watts.
+ *
+ * Read from the MAX20816 rail B READ_POUT (LINEAR11) on the 100 ms telemetry update.
+ */
+#define TAG_VCOREM_POWER 86
+
+/** @brief SerDes VDDL rail power in watts (MPM3695 output voltage x current). */
+#define TAG_SERDES_VDDL_POWER 87
+
+/** @brief SerDes VDD rail power in watts (MPM3695 output voltage x current). */
+#define TAG_SERDES_VDD_POWER 88
+
+/** @brief SerDes VDDH rail power in watts (MPM3695 output voltage x current). */
+#define TAG_SERDES_VDDH_POWER 89
+
+/** @brief GDDR VDDR rail power in watts, one module serving east and west (MPM3695). */
+#define TAG_GDDR_VDDR_POWER 90
+
+/** @brief GDDR VDDA east rail power in watts (MPM3695 output voltage x current). */
+#define TAG_GDDR_VDDA_EAST_POWER 91
+
+/** @brief GDDR VDDA west rail power in watts (MPM3695 output voltage x current). */
+#define TAG_GDDR_VDDA_WEST_POWER 92
+
 /** @} */ /* end of telemetry_tag group */
 
 /* Not a real tag, signifies the last tag in the list.
  * MUST be incremented if new tags are defined.
  */
-#define TAG_COUNT 86
+#define TAG_COUNT 93
 
 /** @brief Default periodic telemetry update interval in milliseconds. */
 #define TELEM_UPDATE_INTERVAL_DEFAULT_MS 100

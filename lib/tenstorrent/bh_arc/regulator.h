@@ -14,6 +14,8 @@
 #define SERDES_VDD_ADDR             0x31
 #define SERDES_VDDH_ADDR            0x32
 #define GDDR_VDDR_ADDR              0x33
+#define GDDR_VDDA_EAST_ADDR         0x34
+#define GDDR_VDDA_WEST_ADDR         0x35
 #define GDDRIO_WEST_ADDR            0x36
 #define GDDRIO_EAST_ADDR            0x37
 #define CB_GDDR_VDDR_WEST_ADDR      0x54
@@ -42,4 +44,6 @@ float GetGddrWestIoCurrent(void);
 float GetGddrEastIoCurrent(void);
 float GetGddrWestIoPower(void);
 float GetGddrEastIoPower(void);
+float GetVcoremPower(void);
+float GetMpmRailPower(uint8_t addr);
 #endif
