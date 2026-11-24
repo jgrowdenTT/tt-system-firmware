@@ -5,7 +5,6 @@ config TT_GRENDEL_FILTER
 	bool "Grendel fabric filter (SiVal firewall wrapper)"
 	depends on SOC_TT_KERAUNOS_SMC
 	default y
-	select LOG
 	help
 	  Wrap SiVal firewall.c and program SMC inbound host windows
 	  (scratch, VUART, SEP-safe SRAM, BUN2 staging).
