@@ -154,7 +154,11 @@ float GetVcorePower(void)
 	return ConvertLinear11ToFloat(pout);
 }
 
-/* The function returns the VCOREM rail power in W (MAX20816 rail B, LINEAR11 READ_POUT). */
+/* The function returns the VCOREM rail power in W (MAX20816 rail B, LINEAR11 READ_POUT).
+ * READ_POUT on rail B reads 2x the measured power, so it is halved here.
+ */
+#define VCOREM_POUT_SCALE 0.5f
+
 float GetVcoremPower(void)
 {
 	I2CInit(I2CMst, P0V8_VCOREM_ADDR, I2CFastMode, PMBUS_MST_ID);
@@ -162,7 +166,7 @@ float GetVcoremPower(void)
 
 	I2CReadBytes(PMBUS_MST_ID, READ_POUT, PMBUS_CMD_BYTE_SIZE, (uint8_t *)&pout,
 		     READ_POUT_DATA_BYTE_SIZE, PMBUS_FLIP_BYTES);
-	return ConvertLinear11ToFloat(pout);
+	return ConvertLinear11ToFloat(pout) * VCOREM_POUT_SCALE;
 }
 
 /* The function returns the output power in W of the MPM3695 at addr. The MPM3695 has no
