@@ -23,7 +23,7 @@ tests:
   kernel.device.minimallibc:
     integration_platforms:
       - native_sim
-    filter: CONFIG_MINIMAL_LIBC_SUPPORTED and not CONFIG_COVERAGE
+    filter: CONFIG_MINIMAL_LIBC_SUPPORTED
     tags:
       - libc
     extra_configs:

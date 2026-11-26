@@ -71,6 +71,69 @@ ZTEST(uart_tt_virt, test_configure_null_config)
 	zassert_equal(err, -EINVAL, "NULL configuration not rejected with -EINVAL: %d", err);
 }
 
+/**
+ * @brief A stop-bits value outside the enum range is rejected.
+ * @details Sets stop_bits to 7, outside UART_CFG_STOP_BITS_0_5..2, and expects uart_configure()
+ * to return -EINVAL. The driver validates stop bits before storing the configuration.
+ * @ingroup tests_uart_tt_virt
+ */
+ZTEST(uart_tt_virt, test_configure_invalid_stop_bits)
+{
+	struct uart_config cfg = valid_cfg;
+	int err;
+
+	cfg.stop_bits = 7;
+	err = uart_configure(UART_DEV, &cfg);
+
+	zassert_equal(err, -EINVAL, "invalid stop_bits not rejected with -EINVAL: %d", err);
+}
+
+/**
+ * @brief A data-bits value outside the enum range is rejected.
+ * @details Sets data_bits to 7, outside UART_CFG_DATA_BITS_5..8, and expects uart_configure()
+ * to return -EINVAL. The driver validates data bits before storing the configuration.
+ * @ingroup tests_uart_tt_virt
+ */
+ZTEST(uart_tt_virt, test_configure_invalid_data_bits)
+{
+	struct uart_config cfg = valid_cfg;
+	int err;
+
+	cfg.data_bits = 7;
+	err = uart_configure(UART_DEV, &cfg);
+
+	zassert_equal(err, -EINVAL, "invalid data_bits not rejected with -EINVAL: %d", err);
+}
+
+static void noop_uart_callback(const struct device *dev, void *user_data)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(user_data);
+}
+
+/**
+ * @brief Interrupt enable and disable paths run with and without a callback.
+ * @details Enables TX with no callback set, so the service path must run without one, then
+ * disables it. Enables and disables RX and TX with a no-op callback set. The callback is cleared
+ * at the end. Each call must return without faulting.
+ * @ingroup tests_uart_tt_virt
+ */
+ZTEST(uart_tt_virt, test_irq_enable_disable_paths)
+{
+	uart_irq_callback_set(UART_DEV, NULL);
+	uart_irq_tx_enable(UART_DEV);
+	k_msleep(10);
+	uart_irq_tx_disable(UART_DEV);
+
+	uart_irq_callback_set(UART_DEV, noop_uart_callback);
+	uart_irq_rx_enable(UART_DEV);
+	uart_irq_rx_disable(UART_DEV);
+	uart_irq_tx_enable(UART_DEV);
+	uart_irq_tx_disable(UART_DEV);
+
+	uart_irq_callback_set(UART_DEV, NULL);
+}
+
 /* The version the driver compares against: the register address in the MS byte, then the
  * version property in the low 24 bits (see uart_tt_virt config in the driver).
  */
