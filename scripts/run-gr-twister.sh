@@ -80,6 +80,9 @@ xconfig=(
 	# thread_metric: 5s measurement periods instead of 30s (~15s -> ~3s per benchmark on ttsim).
 	# Only read by tests/benchmarks/thread_metric; other tests ignore it.
 	-x=TM_TEST_DURATION=5
+	# Coverage instrumentation adds stack use to the scheduler and timeout code, e.g.
+	# kernel.scheduler.slice_perthread needs more than the default extra test stack.
+	-x=CONFIG_TEST_EXTRA_STACK_SIZE=3072
 )
 
 # Coverage: the report root must contain tt-system-firmware as well as zephyr, or gcovr drops its files.
