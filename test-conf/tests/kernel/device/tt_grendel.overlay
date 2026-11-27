@@ -87,4 +87,11 @@
 		status = "okay";
 		#power-domain-cells = <0>;
 	};
+
+	fakedeferdriver@fa000000 {
+		compatible = "fakedeferdriver";
+		reg = <0x0 0xfa000000 0x0 0x2000>;
+		status = "okay";
+		zephyr,deferred-init;
+	};
 };

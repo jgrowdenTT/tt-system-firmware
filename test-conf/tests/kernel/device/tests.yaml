@@ -1,4 +1,4 @@
-# Upstream zephyr/tests/kernel/device/testcase.yaml plus a Grendel overlay replacing app.overlay
+# Upstream zephyr/tests/kernel/device/tests.yaml plus a Grendel overlay replacing app.overlay
 # (see tt_grendel.overlay). Keep scenarios in sync with upstream.
 common:
   tags:
