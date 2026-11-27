@@ -1,0 +1,10 @@
+tests:
+  lib.tenstorrent.gr_smc:
+    platform_allow:
+      - tt_mmk/tt_keraunos/smc
+    integration_platforms:
+      - tt_mmk/tt_keraunos/smc
+    tags:
+      - gr_smc
+      - lib
+    harness: ztest
