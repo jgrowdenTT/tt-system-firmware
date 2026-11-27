@@ -105,17 +105,30 @@ ZTEST(uart_tt_virt, test_configure_invalid_data_bits)
 	zassert_equal(err, -EINVAL, "invalid data_bits not rejected with -EINVAL: %d", err);
 }
 
-static void noop_uart_callback(const struct device *dev, void *user_data)
+/*
+ * The driver's service loop calls the callback until no interrupt is pending, so the callback
+ * must clear what it serves: disable TX once it is ready and drain RX. A callback that leaves
+ * the condition set keeps the timer handler spinning and blocks the test thread.
+ */
+static void service_uart_callback(const struct device *dev, void *user_data)
 {
-	ARG_UNUSED(dev);
+	uint8_t rx_buf[16];
+
 	ARG_UNUSED(user_data);
+
+	if (uart_irq_tx_ready(dev)) {
+		uart_irq_tx_disable(dev);
+	}
+	if (uart_irq_rx_ready(dev)) {
+		(void)uart_fifo_read(dev, rx_buf, sizeof(rx_buf));
+	}
 }
 
 /**
  * @brief Interrupt enable and disable paths run with and without a callback.
  * @details Enables TX with no callback set, so the service path must run without one, then
- * disables it. Enables and disables RX and TX with a no-op callback set. The callback is cleared
- * at the end. Each call must return without faulting.
+ * disables it. Enables and disables RX and TX with a callback that services each interrupt
+ * set. The callback is cleared at the end. Each call must return without faulting.
  * @ingroup tests_uart_tt_virt
  */
 ZTEST(uart_tt_virt, test_irq_enable_disable_paths)
@@ -125,7 +138,7 @@ ZTEST(uart_tt_virt, test_irq_enable_disable_paths)
 	k_msleep(10);
 	uart_irq_tx_disable(UART_DEV);
 
-	uart_irq_callback_set(UART_DEV, noop_uart_callback);
+	uart_irq_callback_set(UART_DEV, service_uart_callback);
 	uart_irq_rx_enable(UART_DEV);
 	uart_irq_rx_disable(UART_DEV);
 	uart_irq_tx_enable(UART_DEV);
