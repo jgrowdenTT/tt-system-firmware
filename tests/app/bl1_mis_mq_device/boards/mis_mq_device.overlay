@@ -1,0 +1,29 @@
+/*
+ * Copyright (c) 2026 Tenstorrent AI ULC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * Test overlay for the BL1 Mimir/Quasar launcher (mis_launch_mq.c).
+ *
+ * Both mailboxes the launcher uses are rebound to a test-only compatible. The real
+ * tenstorrent,grendel-mbox driver never binds, so no hardware is touched. The stub devices are
+ * defined in src/main.c and their API calls are FFF fakes. The launcher still gets device
+ * objects from DT_NODELABEL(mbox0) and DT_NODELABEL(k_mbox), so the nodes must exist.
+ */
+&mbox0 {
+	compatible = "tenstorrent,mbox-test-stub";
+	#mbox-cells = <1>;
+	status = "okay";
+};
+
+/ {
+	/* Mimir SPA view of Keraunos' mbox0, as in app/bl1/boards/tt_mmk_tt_mimir_smc.overlay. */
+	k_mbox: mbox@1202018000 {
+		compatible = "tenstorrent,mbox-test-stub";
+		reg = <0x12 0x02018000 0x0 0x20000>;
+		channel-pairs = <32>;
+		#mbox-cells = <1>;
+		status = "okay";
+	};
+};

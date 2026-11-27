@@ -1,0 +1,36 @@
+/**
+
+@brief BL1 Mimir/Quasar mission-FW launch, on device
+@defgroup tests_bl1_mis_mq_device BL1 Mimir/Quasar mission-FW launch, on device
+@ingroup all_tests
+@details
+On-device tests for the BL1 Mimir/Quasar launcher (app/bl1/mis_launch_mq.c), run unchanged.
+
+The two mailboxes the launcher uses are rebound in the test overlay to a stub driver, so the real
+mailbox driver never binds. The stub's driver API table points at FFF fakes: send, set_enabled,
+and register_callback. The inline mbox_send(), mbox_set_enabled(), and mbox_register_callback()
+wrappers dispatch to those entries.
+
+The Keraunos go is delivered by calling the callback the launcher registered, from inside the fake
+ping. A not-ready device is simulated by clearing the initialized flag in the device state for
+mbox0 for one call.
+
+Two calls are faked, because they leave the device:
+- gr_smc_get_chipid() reads the chiplet's CHIP_ID straps, which this test does not set.
+- gr_smc_jump_to() never returns, so the tests only check that it was called.
+
+@section tests_bl1_mis_mq_device_plan Test plan
+
+| Test | Expected behaviour |
+|---|---|
+| test_ping_then_go_jumps_to_mis | Instance 1 registers on mbox0 channel 1, enables it, pings Keraunos on the instance's ready-out channel, takes the go, and jumps to MIS. |
+| test_ready_pair_follows_chip_instance | The ready-out channel follows the CHIP_ID instance: instance 2 pings on its own pair. |
+| test_register_failure_returns_without_ping | A failed callback registration returns before any enable, ping, or jump. |
+| test_enable_failure_disables_and_returns | A failed enable disables the channel again and returns before any ping or jump. |
+| test_ping_failure_returns_without_jump | A failed ping returns without a jump. |
+| test_device_not_ready_returns_without_mbox_calls | A mailbox that is not ready makes the launcher return before any mailbox call or jump. |
+
+@{
+@}
+
+*/

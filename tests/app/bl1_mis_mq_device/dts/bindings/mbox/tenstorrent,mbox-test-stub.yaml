@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Tenstorrent AI ULC
+# SPDX-License-Identifier: Apache-2.0
+
+# Stub mailbox controller for the BL1 mis_launch_mq test. The driver is defined in src/main.c
+# with FFF fakes. The binding matches the project's tenstorrent,grendel-mbox so the consumers
+# in the board DTS resolve the same way.
+description: Test stub for a Grendel mailbox controller
+
+compatible: "tenstorrent,mbox-test-stub"
+
+include: [base.yaml, mailbox-controller.yaml]
+
+properties:
+  reg:
+    required: true
+  channel-pairs:
+    type: int
+    required: true
+
+mbox-cells:
+  - channel
